@@ -103,7 +103,7 @@ def setupWorld(client):
 
 
 class myEnv(Env):
-    def __init__(self, training=True, reward={"Position":1}, maxSteps=2000):
+    def __init__(self, training=True, reward={"Position":-0.01,"Fail": -10,"Goal": 10}, maxSteps=2000):
         '''
         Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ,gvX,gvY,gvthZ [12]
         Action Space -> vX,vY,vthZ [3]
@@ -240,9 +240,9 @@ class myEnv(Env):
         bodyPose, obsBodyOri = p.getBasePositionAndOrientation(self.robot)
         obsBodyPose = [bodyPose[i]/FIELD_RANGE for i in range(3)]
         obsVel,obsAngularRate = p.getBaseVelocity(self.robot)
-        obsTarget = [self._getTargets()[i] - obsBodyPose[i] for i in range(3)]
+        obsTarget = [(self._getTargets()[i] - obsBodyPose[i])/FIELD_RANGE for i in range(3)]
         
-        obs = np.concatenate((obsBodyPose[0:2], Q2E(obsBodyOri)[2], obsVel[0:2], obsAngularRate[2], obsTarget[0:2]/FIELD_RANGE), axis=None)
+        obs = np.concatenate((obsBodyPose[0:2], Q2E(obsBodyOri)[2], obsVel[0:2], obsAngularRate[2], obsTarget[0:2]), axis=None)
 
         return obs
 
@@ -264,8 +264,15 @@ class myEnv(Env):
 
 
 
-env = myEnv(False)
-check_env(env)
+#env = myEnv(False)
+#obs = env.reset()
+#env.render()
+
+#print(env.observation_space)
+#print(env.action_space)
+#print(env.action_space.sample())
+
+
 
 
 
