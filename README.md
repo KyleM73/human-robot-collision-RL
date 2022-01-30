@@ -1,22 +1,25 @@
 # USER GUIDE
 
 ## SECTIONS
-### SETUP
-### RUNNING THE CODE
-### DIRECTORY STRUCTURE
+#### SETUP
+#### RUNNING THE CODE
+#### DIRECTORY STRUCTURE
 
 ## SETUP
 
 **this module was tested with python 3.9.7**
 
-if using a virtul env (conda,venv, etc.), create an environment with python>=3.8
+if using a virtul env (conda, venv, etc.), create an environment with python>=3.8
 
 in the terminal:
-'python -V'
+    'python -V'
 if the result is not greater than 3.8.x -> everywhere this guide says 'python'
+
 replace 'python' with 'python3.x' for x = 8 or x = 9
+
 from outermost folder (/human_robot_collision_RL),
-'pip install -e .'
+
+    'pip install -e .'
 this will create the 'human_robot_collision_RL.egg-info' folder
 make sure that the libraries in setup.py are installed
 in the terminal:
@@ -43,7 +46,7 @@ example: 'localhost:6006/'
 COPY and PASTE this address into a web browser to access tensorboard logging
 
 
-# DIRECTORY STRUCTURE
+## DIRECTORY STRUCTURE
 
     /human_robot_collision_RL
         /setup.py
