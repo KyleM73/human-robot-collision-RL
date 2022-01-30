@@ -1,10 +1,3 @@
-# USER GUIDE
-
-## SECTIONS
-#### SETUP
-#### RUNNING THE CODE
-#### DIRECTORY STRUCTURE
-
 ## SETUP
 
 **this module was tested with python 3.9.7**
@@ -21,27 +14,33 @@
 
     `pip install -e .`
 
-this will build the module. make sure that the libraries in setup.py are installed in the terminal. to verify, run
+    this will build the module. make sure that the libraries in setup.py are installed in the terminal. to verify, run
 
-`python setup_test.py`
-the result should be 'SETUP PASSED'
+    `python setup_test.py`
+
+    the result should be 'SETUP PASSED'
 
 ## RUNNING THE CODE
 
-to test the simulation environment  : see script/RLenv.py
-to train the model                  : see script/learning.py
-to evaluate the model               : see script/evaluate.py
-to view model evaluation online     : see save/Experiment_*/videos
-to change reward parameters         : see script/config/rewards.py
-to change reward function           : see script/RLenv.($CLASS)._evaluate()
+- to test the simulation environment  : see `script/RLenv.py`
+- to train the model                  : see `script/learning.py`
+- to evaluate the model               : see `script/evaluate.py`
+- to view model evaluation online     : see `save/Experiment_*/videos`
+- to change reward parameters         : see `script/config/rewards.py`
+- to change reward function           : see `script/RLenv.($CLASS)._evaluate()`
 
 
 after calling script/learning.py, you will see the following line:
-'Logging to ./human_robot_collision_RL/log/Experiment_*/****_****_*'
-after learning is complete (or simultaneously in a separate terminal),
-RUN 'tensorboard --logdir ./human_robot_collision_RL/log/Experiment_*/****_****_*'
+
+`Logging to ./human_robot_collision_RL/log/Experiment_*/****_****_*`
+
+after learning is complete (or simultaneously in a separate terminal), run
+
+`tensorboard --logdir ./human_robot_collision_RL/log/Experiment_*/****_****_*`
+
 this command will give you a host to connect to via a browser
-example: 'localhost:6006/'
+example: `localhost:6006/`
+
 COPY and PASTE this address into a web browser to access tensorboard logging
 
 
