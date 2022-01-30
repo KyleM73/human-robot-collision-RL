@@ -15,7 +15,7 @@ venv.bak/
 
 # Large files
 *.mp4
-**/log
+*.zip
 
 # Installer logs
 pip-log.txt
