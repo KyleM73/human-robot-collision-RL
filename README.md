@@ -11,23 +11,19 @@
 
 - if using a virtul env (conda, venv, etc.), create an environment with python>=3.8. to check python version, in the terminal run
 
-    ```
-    python -V
-    python3 -V
-    ```
+    `python -V`
+    and
+    `python3 -V`
 
-    if the result is not greater than 3.8.x, then everywhere where this guide says 'python,' replace 'python' with 'python3.x' for x = 8 or x = 9.
+    if the result is not greater than 3.8.x, then everywhere where this guide says 'python,' replace with 'python3.x' for x = 8 or x = 9.
 
 - from outermost folder (/human_robot_collision_RL), run
 
-    pip install -e .
+    `pip install -e .`
 
-this will build the module
-make sure that the libraries in setup.py are installed
-in the terminal:
-to verify,
-'python setup_test.py'
-result should be 'SETUP PASSED'
+this will build the module. make sure that the libraries in setup.py are installed in the terminal. to verify, run
+`python setup_test.py`
+the result should be 'SETUP PASSED'
 
 ## RUNNING THE CODE
 
