@@ -39,7 +39,7 @@ after learning is complete (or simultaneously in a separate terminal), run
 `tensorboard --logdir ./human_robot_collision_RL/log/Experiment_*/****_****_*`
 
 this command will give you a host to connect to via a browser
-example: `localhost:6006/`
+example: `localhost:****/`
 
 COPY and PASTE this address into a web browser to access tensorboard logging
 
