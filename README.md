@@ -9,18 +9,17 @@
 
 **this module was tested with python 3.9.7**
 
-if using a virtul env (conda, venv, etc.), create an environment with python>=3.8
+- if using a virtul env (conda, venv, etc.), create an environment with python>=3.8. to check python version, in the terminal run
 
-in the terminal:
-    'python -V'
-if the result is not greater than 3.8.x -> everywhere this guide says 'python'
+    python -V
 
-replace 'python' with 'python3.x' for x = 8 or x = 9
+if the result is not greater than 3.8.x, then everywhere where guide says 'python,' replace 'python' with 'python3.x' for x = 8 or x = 9.
 
-from outermost folder (/human_robot_collision_RL),
+- from outermost folder (/human_robot_collision_RL), run
 
-    'pip install -e .'
-this will create the 'human_robot_collision_RL.egg-info' folder
+    pip install -e .
+
+this will build the module
 make sure that the libraries in setup.py are installed
 in the terminal:
 to verify,
