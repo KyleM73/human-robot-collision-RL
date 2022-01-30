@@ -1,48 +1,49 @@
-#USER GUIDE
+# USER GUIDE
 
-##SECTIONS
-    ###SETUP
-    ###RUNNING THE CODE
-    ###DIRECTORY STRUCTURE
+## SECTIONS
+### SETUP
+### RUNNING THE CODE
+### DIRECTORY STRUCTURE
 
-##SETUP
+## SETUP
 
-    **this module was tested with python 3.9.7**
+**this module was tested with python 3.9.7**
 
-    if using a virtul env (conda,venv, etc.), create an environment with python>=3.8
+if using a virtul env (conda,venv, etc.), create an environment with python>=3.8
 
-    in the terminal:
-        'python -V'
-        if the result is not greater than 3.8.x -> everywhere this guide says 'python'
-        replace 'python' with 'python3.x' for x = 8 or x = 9
-        from outermost folder (/human_robot_collision_RL),
-        RUN 'pip install -e .'
-    this will create the 'human_robot_collision_RL.egg-info' folder
-    make sure that the libraries in setup.py are installed
-    in the terminal:
-        to verify,
-        'python setup_test.py'
-        result should be 'SETUP PASSED'
+in the terminal:
+'python -V'
+if the result is not greater than 3.8.x -> everywhere this guide says 'python'
+replace 'python' with 'python3.x' for x = 8 or x = 9
+from outermost folder (/human_robot_collision_RL),
+'pip install -e .'
+this will create the 'human_robot_collision_RL.egg-info' folder
+make sure that the libraries in setup.py are installed
+in the terminal:
+to verify,
+'python setup_test.py'
+result should be 'SETUP PASSED'
 
-##RUNNING THE CODE
+## RUNNING THE CODE
 
-    to test the simulation environment  : see script/RLenv.py
-    to train the model                  : see script/learning.py
-    to evaluate the model               : see script/evaluate.py
-    to view model evaluation online     : see save/Experiment_*/videos
-    to change reward parameters         : see script/config/rewards.py
-    to change reward function           : see script/RLenv.($CLASS)._evaluate()
-
-    after calling script/learning.py, you will see the following line:
-    'Logging to ./human_robot_collision_RL/log/Experiment_*/****_****_*'
-    after learning is complete (or simultaneously in a separate terminal),
-    RUN 'tensorboard --logdir ./human_robot_collision_RL/log/Experiment_*/****_****_*'
-    this command will give you a host to connect to via a browser
-    example: 'localhost:6006/'
-    COPY and PASTE this address into a web browser to access tensorboard logging
+to test the simulation environment  : see script/RLenv.py
+to train the model                  : see script/learning.py
+to evaluate the model               : see script/evaluate.py
+to view model evaluation online     : see save/Experiment_*/videos
+to change reward parameters         : see script/config/rewards.py
+to change reward function           : see script/RLenv.($CLASS)._evaluate()
 
 
-##DIRECTORY STRUCTURE
+after calling script/learning.py, you will see the following line:
+'Logging to ./human_robot_collision_RL/log/Experiment_*/****_****_*'
+after learning is complete (or simultaneously in a separate terminal),
+RUN 'tensorboard --logdir ./human_robot_collision_RL/log/Experiment_*/****_****_*'
+this command will give you a host to connect to via a browser
+example: 'localhost:6006/'
+COPY and PASTE this address into a web browser to access tensorboard logging
+
+
+# DIRECTORY STRUCTURE
 
     /human_robot_collision_RL
         /setup.py
