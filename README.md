@@ -22,6 +22,7 @@
     `pip install -e .`
 
 this will build the module. make sure that the libraries in setup.py are installed in the terminal. to verify, run
+
 `python setup_test.py`
 the result should be 'SETUP PASSED'
 
