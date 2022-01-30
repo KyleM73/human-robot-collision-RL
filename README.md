@@ -13,7 +13,7 @@
 
     python -V
 
-if the result is not greater than 3.8.x, then everywhere where guide says 'python,' replace 'python' with 'python3.x' for x = 8 or x = 9.
+    if the result is not greater than 3.8.x, then everywhere where guide says 'python,' replace 'python' with 'python3.x' for x = 8 or x = 9.
 
 - from outermost folder (/human_robot_collision_RL), run
 
@@ -50,7 +50,7 @@ COPY and PASTE this address into a web browser to access tensorboard logging
     /human_robot_collision_RL
         /setup.py
         /setup_test.py
-        /user_guide.txt
+        /README.md
         /RL_TODO.txt
         /human_robot_collision_RL.egg-info
             /dependency_links.txt
