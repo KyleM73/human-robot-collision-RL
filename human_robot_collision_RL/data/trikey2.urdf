@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot name="trikey2">
+  <link name="base_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value="4.53592"/>
+       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <cylinder length="0.635" radius="0.2794"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.635" radius="0.2794" />
+      </geometry>
+    </collision>
+  </link>
+</robot>
