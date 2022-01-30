@@ -1,6 +1,0 @@
-setup.py
-human_robot_collision_RL.egg-info/PKG-INFO
-human_robot_collision_RL.egg-info/SOURCES.txt
-human_robot_collision_RL.egg-info/dependency_links.txt
-human_robot_collision_RL.egg-info/requires.txt
-human_robot_collision_RL.egg-info/top_level.txt
