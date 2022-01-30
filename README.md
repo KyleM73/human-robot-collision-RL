@@ -1,18 +1,18 @@
-USER GUIDE
+#USER GUIDE
 
-SECTIONS
-    SETUP
-    RUNNING THE CODE
-    DIRECTORY STRUCTURE
+##SECTIONS
+    ###SETUP
+    ###RUNNING THE CODE
+    ###DIRECTORY STRUCTURE
 
-SETUP
+##SETUP
 
     **this module was tested with python 3.9.7**
 
     if using a virtul env (conda,venv, etc.), create an environment with python>=3.8
 
     in the terminal:
-        RUN 'python -V'
+        'python -V'
         if the result is not greater than 3.8.x -> everywhere this guide says 'python'
         replace 'python' with 'python3.x' for x = 8 or x = 9
         from outermost folder (/human_robot_collision_RL),
@@ -21,10 +21,10 @@ SETUP
     make sure that the libraries in setup.py are installed
     in the terminal:
         to verify,
-        RUN 'python setup_test.py'
+        'python setup_test.py'
         result should be 'SETUP PASSED'
 
-RUNNING THE CODE
+##RUNNING THE CODE
 
     to test the simulation environment  : see script/RLenv.py
     to train the model                  : see script/learning.py
@@ -42,7 +42,7 @@ RUNNING THE CODE
     COPY and PASTE this address into a web browser to access tensorboard logging
 
 
-DIRECTORY STRUCTURE
+##DIRECTORY STRUCTURE
 
     /human_robot_collision_RL
         /setup.py
