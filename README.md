@@ -41,7 +41,9 @@ after learning is complete (or simultaneously in a separate terminal), run
 this command will give you a host to connect to via a browser
 example: `localhost:****/`
 
-COPY and PASTE this address into a web browser to access tensorboard logging
+copy and paste this address into a web browser to access tensorboard logging
+
+for a list of open issues, see `RL_To_Do.txt`
 
 
 ## DIRECTORY STRUCTURE
