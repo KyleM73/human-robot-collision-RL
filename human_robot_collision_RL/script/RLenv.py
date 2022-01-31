@@ -32,16 +32,31 @@ def setupGoal(client, pose):
 
     idCollisionShape = None
 
+    ##TODO: debug, doesn't always face the right direction, duck should point towards robot's initial starting loc
+    #pose = [0,-1,0]
     goalPosition = [pose[0], pose[1], 0.025]
+    goalPoseScaled = pose/np.linalg.norm(goalPosition)
+    ref = np.array([1,0,0])
+    th = np.arccos(np.dot(ref[0:2],goalPoseScaled[0:2]))
+    if pose[1] >= 0:
+        th -= PI/2
+    else:
+        th += PI/2
+        if pose[0] > 0:
+            th += PI/2
+        elif pose[0] < 0:
+            th -= PI/2
+    print(th)
     goalModel = p.createMultiBody(
         baseVisualShapeIndex=idVisualShape, 
-        basePosition=goalPosition
+        basePosition=goalPosition,
+        baseOrientation=p.getQuaternionFromEuler([0,0,th])
         )
 
     return goalModel
 
 
-def setupRobot(client, pose=[0,-5,0.5], ori=[0,0,0]):
+def setupRobot(client, pose=[0,-1,0.5], ori=[0,0,0]):
     '''
     Args:
         client: pybullet client
@@ -70,17 +85,22 @@ def setupRobot(client, pose=[0,-5,0.5], ori=[0,0,0]):
     return robotModel
 
 
-def setupWorld(client,humans=None):
+def setupWorld(client,humans=None,humanPose=POSE):
     c = client
 
     shapePlane = p.createCollisionShape(shapeType = p.GEOM_PLANE)
     terrainModel  = p.createMultiBody(0, shapePlane)
     p.changeDynamics(terrainModel, -1, lateralFriction=1.0) 
 
-    #TODO: need human to spawn in between robot and goal
-    goalModel = setupGoal(c, np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=2))
+    #sample goal poses such that the goal is at minimum 4m from the robot
+    goalDist = 0
+    while goalDist < 4:
+        goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
+        goalPose[2] = 0 #set z coord
+        goalDist = np.linalg.norm(goalPose)
+    goalModel = setupGoal(c, goalPose)
 
-    robotModel = setupRobot(c, [0., -5., 0.5], [0, 0, 0])
+    robotModel = setupRobot(c, [0., 0., 0.5], [0, 0, 0])
 
     modelsDict = {
         'robot': robotModel,
@@ -93,7 +113,8 @@ def setupWorld(client,humans=None):
         #TODO: add multiple human options
         #TODO: make humans non fixed
         #TODO: let humans walk (implimented but unused currently)
-        humanModel = Man(c._client,partitioned=False,self_collisions=False,timestep=TIME_STEP,fixed=1)
+        humanPose = POSE + goalPose/2
+        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose)
         modelsDict['human'] = humanModel
 
     return modelsDict
@@ -173,7 +194,7 @@ class myEnv(Env):
 
         #initialize robot for REPEAT_INIT timesteps
         for _ in range(REPEAT_INIT):
-            self.control.holdRobot()
+            #self.control.holdRobot() #let robot fall
             self.client.stepSimulation()
             self._getObs()
         self._evaluate()
@@ -559,11 +580,11 @@ class humanEnv(myEnv):
 
 
 if __name__ == "__main__": 
-    env = humanEnv(False,reward=rewardDict)
+    env = myEnv(False,reward=rewardDict)
     obs = env.reset()
     for _ in range(5000):
-        ob, reward, done, dictLog = env.step([0,1,0]) #[m/s]
-        time.sleep(TIME_STEP)
+        ob, reward, done, dictLog = env.step([0,0,0]) #[m/s]
+        time.sleep(TIME_STEP*REPEAT_ACTION)
 
 
 

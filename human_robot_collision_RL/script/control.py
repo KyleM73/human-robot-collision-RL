@@ -60,7 +60,7 @@ class ctlrRobot(object):
         # note: setting the velocity like this violates the simulation dynamics 
         # and will not yield accurate collisions after the initial contact
         if self._pose[2] > 0.1:
-            vZ = -1
+            vZ = -0.5
         else:
             vZ = 0
 

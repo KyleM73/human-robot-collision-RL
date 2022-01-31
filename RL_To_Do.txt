@@ -2,7 +2,6 @@ TODO:
 
 priority 0 -> 10:
 
-- spawn human between robot and goal (10)
 - fix early stopping script/RLenv/($CLASS)._evaluate() (9)
 - spawn human with gait (0)
 - custom MLP (7)
@@ -21,7 +20,7 @@ priority 0 -> 10:
         - Experiment 3v2
     - new reward function
 - write function to automate calling tensorboard without copy and pasting (3)
-- allow gravity to act on robot despite velocity setting scheme (9)
+- allow gravity to act on robot despite velocity setting scheme (9) (ideal vZ is 0 commanded, only effects of gravity)
 - fix b3Printf warnings from man/man_partitioned/child urdf (8)
 
 see additional TODO tags throughout the code
