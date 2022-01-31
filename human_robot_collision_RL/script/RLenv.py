@@ -46,7 +46,7 @@ def setupGoal(client, pose):
             th += PI/2
         elif pose[0] < 0:
             th -= PI/2
-    print(th)
+    #print(th)
     goalModel = p.createMultiBody(
         baseVisualShapeIndex=idVisualShape, 
         basePosition=goalPosition,
