@@ -1,4 +1,5 @@
 from os import path
+import numpy as np
 
 ## Universal constants ##
 
@@ -37,6 +38,7 @@ M_ROBOT = 4.53592 #[kg]
 POSE = [0,0,1.112] #trial and error, works for man, child not tested
 ORI = [PI/2,0,PI]
 M_HUMAN = 75
+TEST_POSE = np.array([0,-5,0])
 
 ## Controller configuartion ##
 

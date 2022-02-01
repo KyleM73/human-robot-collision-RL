@@ -98,7 +98,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
         goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
         goalPose[2] = 0 #set z coord
         goalDist = np.linalg.norm(goalPose)
-    goalPose = np.array([0,5,0]) #FOR DEBUGGING ONLY
+    goalPose = TEST_POSE #FOR DEBUGGING ONLY
     goalModel = setupGoal(c, goalPose)
 
     robotModel = setupRobot(c, [0., 0., 0.5], [0, 0, 0])
@@ -553,6 +553,7 @@ class humanEnv(myEnv):
                 #define dictPressureThreshold for each body part
                 #if dictPressure[P] > self.dictPressureThreshold[P]: done = True
                 if dictPressure[P] > maxP: done = True
+        print(pReward)
         dictRew["Collision"] = pReward
 
         
@@ -592,7 +593,7 @@ if __name__ == "__main__":
     sim_time = 5 # [s]
     steps = int(sim_time/TIME_STEP)
     for _ in range(steps):
-        ob, reward, done, dictLog = env.step([0,1,0]) #[m/s]
+        ob, reward, done, dictLog = env.step(TEST_POSE/np.linalg.norm(TEST_POSE)) #[m/s]
         time.sleep(TIME_STEP/REPEAT_ACTION)
 
 

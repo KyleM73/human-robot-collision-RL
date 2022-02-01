@@ -108,7 +108,7 @@ class Collision:
                 if pos_on_robot[2] > H_ROBOT : pos_on_robot = np.array(pos_on_robot) - np.array([0,0,H_ROBOT])
                 n = -np.array(contact_point[7]) #normal FROM body TO robot
                 area = self._getArea(pos_on_robot,n,self.human.body_id,human_part_id)
-                if area < 0.00001: #omit sufficently small areas that would create unboundedly large pressures
+                if area < 0.0001 or contact_point[9] < 0.0001: #omit sufficently small areas that would create unboundedly large pressures
                     continue
                 
                 #EPFL-LASA collision method - assumes spring model
@@ -133,7 +133,7 @@ class Collision:
         return None
 
 
-    def _getArea(self,pos,normal,human_id,link_id,ref=np.array([0,0,1]),delta=0.00001,stepWidth=0.05):
+    def _getArea(self,pos,normal,human_id,link_id,ref=np.array([0,0,1]),delta=0.00001,stepWidth=0.001):
         #see notes
         #stepWidth 0.05 -> 170 hits vs. 0.01 -> 3500+ hits
 
@@ -145,6 +145,12 @@ class Collision:
         b2 /= np.linalg.norm(b2)
         #basis = [n,b1,b2] #orthonormal basis of n
 
+        #check angle between z and b1
+        th = np.arccos(np.dot(z,b1))
+        if abs(th) > PI/4:
+            print("err: bad normal")
+            return 0
+
         #take a delta-sized step in the direction opposite the normal vector from the point of collision
         collisionPointWithTolerance = pos - delta*normal
 
@@ -154,8 +160,10 @@ class Collision:
         #dz = float(zz/np.cos(thZ)) 
         dz = float(zz/zDotb1) #distance "up" the plane
 
-        dx = R_ROBOT#*2 #edge case if collision is exactly on side (omited *2 due to ray max batch size constraint)
+        #dx = R_ROBOT#*2 #edge case if collision is exactly on side (omited *2 due to ray max batch size constraint)
         #dx = float((xx**2 - delta**2)**0.5) #almost equivalent to above because  0 < delta << 1
+        #dx = 0.1 #10 cm max horiz collision area with curved surface? see below
+        dx = (R_ROBOT**2 - (R_ROBOT-delta)**2)**0.5 #~0.07 for delta=0.01
 
         #split range into stepWidth-sized steps
         zRange = int(np.ceil(dz/stepWidth))
@@ -181,27 +189,38 @@ class Collision:
                 toPosReverse.append(testPtReverse)
         
         #omit rays from collision point to collision plane
-        #hits = p.rayTestBatch(fromPos,toPos)
+        try:
+            hits = p.rayTestBatch(fromPos,toPos)
+        except:
+            print("no hits")
+            return 0
+        area = 0
+        for h in hits:
+            if h[0] == human_id and h[1] == link_id: 
+                area += stepWidth**2
         
+        '''
         try:
             #mark rays between delta-advanced collision plane and collision plane
             hitsReverse = p.rayTestBatch(toPos,toPosReverse)
         except:
             return 0
 
-        area = 0
+        areaR = 0
         for hr in hitsReverse:
-            if hr[0] == self.robot: # and hr[1] == robot_link_id: 
-                area += stepWidth**2
+            #if hr[0] == self.robot: # and hr[1] == robot_link_id: 
+            if h[0] == human_id and h[1] == link_id: 
+                areaR += stepWidth**2
+        '''
 
         #print(4*zRange*xRange*stepWidth**2) #max possible area
 
         #draw collision plane (for debugging with RLenv.py)
-        #self.markArea(dz,dx,delta,normal,pos)
+        #self.markArea(dx,delta,dz,normal,pos)
 
         return area
 
-    def markArea(self,h,l,w,n,pos):
+    def markArea(self,l,w,h,n,pos):
         #TODO: despawn multibodies after X timesteps
         idVisualShape = p.createVisualShape(
         shapeType=p.GEOM_BOX,
