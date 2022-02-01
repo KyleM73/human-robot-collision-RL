@@ -14,9 +14,9 @@ class ctlrRobot(object):
         self.max_dV = 1
 
         self.robot = robot
-        #self.constraintID = p.createConstraint(robot, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0])
+        self.constraintID = p.createConstraint(robot, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0])
 
-        self._flagAction = True
+        self._flagAction = False#True
 
         self.reset()
         self.rcvObservation()
@@ -49,32 +49,27 @@ class ctlrRobot(object):
 
     def applyAction(self, action):
 
-        #dX = self._pose[0] + TIME_STEP*action[0]
-        #dY = self._pose[1] + TIME_STEP*action[1]
-        #dth = Q2E(self._ori)[2] + TIME_STEP*action[2]
+        dX = self._pose[0] + TIME_STEP*action[0]
+        dY = self._pose[1] + TIME_STEP*action[1]
+        vZ = self._vel[2] - 9.8*TIME_STEP
+        dth = Q2E(self._ori)[2] + TIME_STEP*action[2]
 
-        #pivot = [dX,dY,0]
-        #ori = p.getQuaternionFromEuler([0, 0, dth])
-        #p.changeConstraint(self.constraintID,jointChildPivot=pivot,jointChildFrameOrientation=ori,maxForce=20)
-
-        # note: setting the velocity like this violates the simulation dynamics 
-        # and will not yield accurate collisions after the initial contact
-        if self._pose[2] > 0.1:
-            vZ = -0.5
-        else:
-            vZ = 0
-
+        #print(self.constraintID)
+        
+        if self.constraintID is not None:
+            p.changeConstraint(self.constraintID,
+                jointChildPivot=[dX,dY,vZ],
+                jointChildFrameOrientation=p.getQuaternionFromEuler([0, 0, dth]),
+                maxForce=50 #experimental, higher values cause weird bounces
+                )
+        
+        
         #TODO: set max acceleration (change in velocity)
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
         #because we set vel instantly this is a non-issue, but is a big issue on the real robot
         #maybe policy -> smoother -> PD controller -> motor torques
-        #dVx = abs(self._vel[0] - action[0])
-        #dVy = abs(self._vel[1] - action[1])
-        #dVth = abs(self._angularRate[2] - action[2])
 
-        #dV = [dVx,dVy,dVth]
-
-        p.resetBaseVelocity(self.robot,[action[0],action[1],vZ],[0,0,action[2]])
+        #p.resetBaseVelocity(self.robot,[action[0],action[1],vZ],[0,0,action[2]])
 
         return
     
@@ -82,6 +77,7 @@ class ctlrRobot(object):
 
         self.rcvObservation()
         self.applyAction(self._action)
+        #if self._cntStep % REPEAT_ACTION == 0: self.applyAction(self._action)
         self._cntStep += 1
 
         return
@@ -96,7 +92,7 @@ class ctlrRobot(object):
         return self._vel,self._angularRate
 
 
-    def updateAction(self, action):
+    def updateAction(self, action,):
 
         if self._flagAction:
             self._flagAction = False
@@ -106,6 +102,15 @@ class ctlrRobot(object):
             if self._cntStep % REPEAT_ACTION == 0:
                 self._flagAction = True
             return False
+
+    def inCollision(self,flag):
+        self.collision = flag
+        if flag and self.constraintID is not None:
+            p.removeConstraint(self.constraintID)
+            self.constraintID = None
+        elif not flag:
+            self.constraintID = p.createConstraint(self.robot, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0])
+
 
 
 

@@ -79,7 +79,8 @@ def setupRobot(client, pose=[0,-1,0.5], ori=[0,0,0]):
     p.changeDynamics(robotModel,-1,
         lateralFriction=0,
         spinningFriction=0, #TODO: are these necessary? need to test
-        rollingFriction=0
+        rollingFriction=0,
+        restitution=1 #bounciness on surface
         )
 
     return robotModel
@@ -90,7 +91,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
 
     shapePlane = p.createCollisionShape(shapeType = p.GEOM_PLANE)
     terrainModel  = p.createMultiBody(0, shapePlane)
-    p.changeDynamics(terrainModel, -1, lateralFriction=1.0) 
+    p.changeDynamics(terrainModel, -1, lateralFriction=1.0,restitution=0) 
 
     #sample goal poses such that the goal is at minimum 4m from the robot
     goalDist = 0
@@ -98,6 +99,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
         goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
         goalPose[2] = 0 #set z coord
         goalDist = np.linalg.norm(goalPose)
+    goalPose = np.array([0.,5.,0.])
     goalModel = setupGoal(c, goalPose)
 
     robotModel = setupRobot(c, [0., 0., 0.5], [0, 0, 0])
@@ -182,9 +184,6 @@ class myEnv(Env):
         # controller executes actions commanded from RL policy
         self.control = ctlrRobot(self.robot)
 
-        #TODO: only one of these apears to be used? see https://github.com/kiwi-sherbet/ASE389L/blob/main/script/playground.py
-        self.dictCmdParam = {"Offset": np.zeros(NUM_COMMANDS), 
-                            "Scale":  np.array([1] * NUM_COMMANDS)}
         self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
                             "Scale":  np.array([1] * NUM_ACTIONS)}
         
@@ -194,7 +193,7 @@ class myEnv(Env):
 
         #initialize robot for REPEAT_INIT timesteps
         for _ in range(REPEAT_INIT):
-            #self.control.holdRobot() #let robot fall
+            self.control.holdRobot() #let robot fall
             self.client.stepSimulation()
             self._getObs()
         self._evaluate()
@@ -414,6 +413,8 @@ class humanEnv(myEnv):
         self.record = False
         self.recorder = None
 
+        self.inCollision = False
+
     def _setup(self):
 
         ## Initiate simulation
@@ -446,8 +447,7 @@ class humanEnv(myEnv):
         )
 
         self.control = ctlrRobot(self.robot)
-        self.dictCmdParam = {"Offset": np.zeros(NUM_COMMANDS), 
-                            "Scale":  np.array([1] * NUM_COMMANDS)}
+
         self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
                             "Scale":  np.array([1] * NUM_ACTIONS)}
         
@@ -480,10 +480,24 @@ class humanEnv(myEnv):
 
     def _runSim(self, action):
 
+        #col_timer = COLLISION_DURATION
         while not self.control.updateAction(self.dictActParam["Scale"] * action + self.dictActParam["Offset"]):
-            self.control.step()
+            if not self.inCollision:
+                self.control.step()
+            else:
+                print('no cmd')
+
+            #if col_timer > 0:
+            #    self.control.step()
+            #    if not self.inCollision:
+            #        col_timer -= 1
+            #else:
+            #    self.control.inCollision(True)
+
             #self.human.advance(POSE,p.getQuaternionFromEuler([0,0,0])) #used to advance human gait
             self.client.stepSimulation()
+        
+
 
     def _getObs(self):
 
@@ -506,13 +520,23 @@ class humanEnv(myEnv):
 
         if F is not None:
             # ---- Collision Detected ----
+            #self.control.inCollision(True)
+            self.inCollision = True
+
             for part in F.keys():
                 (Fmag,area) = F[part]
                 #report Pressure in N/cm^2
                 PressureDict[part] = Fmag/(area*10000) #convert m^2 to cm^2
+                #print(Fmag)
+                #print(area*10000)
+            print(PressureDict)
+            #print()
 
             return PressureDict # [N/cm^2]
         else:
+            if self.inCollision:
+                #self.control.inCollision(False)
+                self.inCollision = False
             return None
 
     def _evaluate(self):
@@ -580,11 +604,13 @@ class humanEnv(myEnv):
 
 
 if __name__ == "__main__": 
-    env = myEnv(False,reward=rewardDict)
+    env = humanEnv(False,reward=rewardDict)
     obs = env.reset()
-    for _ in range(5000):
-        ob, reward, done, dictLog = env.step([0,0,0]) #[m/s]
-        time.sleep(TIME_STEP*REPEAT_ACTION)
+    sim_time = 5 # [s]
+    steps = int(sim_time/TIME_STEP)
+    for _ in range(steps):
+        ob, reward, done, dictLog = env.step([0.,10,0]) #[m/s]
+        time.sleep(TIME_STEP/REPEAT_ACTION)
 
 
 

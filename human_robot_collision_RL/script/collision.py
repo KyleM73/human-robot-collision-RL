@@ -108,7 +108,7 @@ class Collision:
                 if pos_on_robot[2] > H_ROBOT : pos_on_robot = np.array(pos_on_robot) - np.array([0,0,H_ROBOT])
                 n = -np.array(contact_point[7]) #normal FROM body TO robot
                 area = self._getArea(pos_on_robot,n,self.human.body_id,human_part_id)
-                if area < 0.00001: #omit sufficently small areas that would create unboundedly large pressures
+                if area < 0.00001 or abs(contact_point[9]) < 0.00001: #omit sufficently small areas that would create unboundedly large pressures
                     continue
                 
                 #EPFL-LASA collision method - assumes spring model
@@ -133,7 +133,7 @@ class Collision:
         return None
 
 
-    def _getArea(self,pos,normal,human_id,link_id,ref=np.array([0,0,1]),delta=0.00001,stepWidth=0.05):
+    def _getArea(self,pos,normal,human_id,link_id,ref=np.array([0,0,1]),delta=0.001,stepWidth=0.05):
         #see notes
         #stepWidth 0.05 -> 170 hits vs. 0.01 -> 3500+ hits
 
@@ -174,15 +174,24 @@ class Collision:
                 testPt = pt - stepWidth*(zStep*b1+xStep*b2) #switch the order: top to bottom
                 #testPt = pt - stepWidth*(zStep*z+xStep*np.array([1,0,0])) #plane is up and out
                 testPtReverse = testPt+delta*normal
-                if testPtReverse[2] < 0 or testPt[2] < 0: #top to bottom means we can stop searching when we hit zero
+                if testPtReverse[2] <= 0 or testPt[2] <= 0: #top to bottom means we can stop searching when we hit zero
                     break
                 fromPos.append(pos)
                 toPos.append(testPt)
                 toPosReverse.append(testPtReverse)
         
         #omit rays from collision point to collision plane
-        #hits = p.rayTestBatch(fromPos,toPos)
         
+        try:
+            hits = p.rayTestBatch(fromPos,toPos)
+        except:
+            return 0
+
+        area = 0
+        for hr in hits:
+            if hr[0] == human_id and hr[1] == link_id: 
+                area += stepWidth**2
+        '''
         try:
             #mark rays between delta-advanced collision plane and collision plane
             hitsReverse = p.rayTestBatch(toPos,toPosReverse)
@@ -191,17 +200,24 @@ class Collision:
 
         area = 0
         for hr in hitsReverse:
-            if hr[0] == self.robot: # and hr[1] == robot_link_id: 
+
+            #if hr[0] == self.robot: # and hr[1] == robot_link_id: 
+            if hr[0] == human_id:# and hr[1] == link_id: 
                 area += stepWidth**2
+
+            print(hr)
+        '''
+        #print(area)
+        #print()
 
         #print(4*zRange*xRange*stepWidth**2) #max possible area
 
         #draw collision plane (for debugging with RLenv.py)
-        #self.markArea(dz,dx,delta,normal,pos)
+        self.markArea(dx,delta,dz,normal,pos)
 
         return area
 
-    def markArea(self,h,l,w,n,pos):
+    def markArea(self,l,w,h,n,pos):
         #TODO: despawn multibodies after X timesteps
         idVisualShape = p.createVisualShape(
         shapeType=p.GEOM_BOX,
@@ -213,7 +229,7 @@ class Collision:
 
         boxModel = p.createMultiBody(
         baseVisualShapeIndex=idVisualShape, 
-        basePosition=pos
+        basePosition=pos-w*n/2
         )
 
         return boxModel
