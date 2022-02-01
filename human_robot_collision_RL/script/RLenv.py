@@ -98,6 +98,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
         goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
         goalPose[2] = 0 #set z coord
         goalDist = np.linalg.norm(goalPose)
+    goalPose = np.array([0,5,0]) #FOR DEBUGGING ONLY
     goalModel = setupGoal(c, goalPose)
 
     robotModel = setupRobot(c, [0., 0., 0.5], [0, 0, 0])
@@ -414,6 +415,8 @@ class humanEnv(myEnv):
         self.record = False
         self.recorder = None
 
+        self.inCollision = False
+
     def _setup(self):
 
         ## Initiate simulation
@@ -446,8 +449,7 @@ class humanEnv(myEnv):
         )
 
         self.control = ctlrRobot(self.robot)
-        self.dictCmdParam = {"Offset": np.zeros(NUM_COMMANDS), 
-                            "Scale":  np.array([1] * NUM_COMMANDS)}
+        
         self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
                             "Scale":  np.array([1] * NUM_ACTIONS)}
         
@@ -481,7 +483,8 @@ class humanEnv(myEnv):
     def _runSim(self, action):
 
         while not self.control.updateAction(self.dictActParam["Scale"] * action + self.dictActParam["Offset"]):
-            self.control.step()
+            if not self.inCollision: 
+                self.control.step()
             #self.human.advance(POSE,p.getQuaternionFromEuler([0,0,0])) #used to advance human gait
             self.client.stepSimulation()
 
@@ -506,6 +509,8 @@ class humanEnv(myEnv):
 
         if F is not None:
             # ---- Collision Detected ----
+            self.inCollision = True
+
             for part in F.keys():
                 (Fmag,area) = F[part]
                 #report Pressure in N/cm^2
@@ -513,6 +518,8 @@ class humanEnv(myEnv):
 
             return PressureDict # [N/cm^2]
         else:
+            if self.inCollision:
+                self.inCollision = False
             return None
 
     def _evaluate(self):
@@ -580,11 +587,13 @@ class humanEnv(myEnv):
 
 
 if __name__ == "__main__": 
-    env = myEnv(False,reward=rewardDict)
+    env = humanEnv(False,reward=rewardDict)
     obs = env.reset()
-    for _ in range(5000):
-        ob, reward, done, dictLog = env.step([0,0,0]) #[m/s]
-        time.sleep(TIME_STEP*REPEAT_ACTION)
+    sim_time = 5 # [s]
+    steps = int(sim_time/TIME_STEP)
+    for _ in range(steps):
+        ob, reward, done, dictLog = env.step([0,1,0]) #[m/s]
+        time.sleep(TIME_STEP/REPEAT_ACTION)
 
 
 

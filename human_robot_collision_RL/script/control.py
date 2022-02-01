@@ -51,6 +51,7 @@ class ctlrRobot(object):
 
         #dX = self._pose[0] + TIME_STEP*action[0]
         #dY = self._pose[1] + TIME_STEP*action[1]
+
         #dth = Q2E(self._ori)[2] + TIME_STEP*action[2]
 
         #pivot = [dX,dY,0]
@@ -59,10 +60,7 @@ class ctlrRobot(object):
 
         # note: setting the velocity like this violates the simulation dynamics 
         # and will not yield accurate collisions after the initial contact
-        if self._pose[2] > 0.1:
-            vZ = -0.5
-        else:
-            vZ = 0
+        vZ = self._vel[2] - 9.8*TIME_STEP
 
         #TODO: set max acceleration (change in velocity)
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
