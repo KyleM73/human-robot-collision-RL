@@ -22,7 +22,7 @@ colDict = {
 }
 
 rewardDict = {
-    "Position"        :  -0.02,
+    "Position"        :  -0.04,
     "Angle"           :  -0.01,
     "Velocity"        : -0.001,
     "AngularVelocity" :  -0.01,
@@ -31,7 +31,8 @@ rewardDict = {
     "Collision"       : colDict
 }
 
-def getPressureReward(P,maxP=100,maxCost=-10):
-    if P < maxP:
-        return P
+def getPressureReward(P,maxP=100,maxCost=150):
     return maxCost
+    #if P < maxP:
+    #    return P
+    #return maxCost

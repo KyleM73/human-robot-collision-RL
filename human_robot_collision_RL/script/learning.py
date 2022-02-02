@@ -24,7 +24,7 @@ env_ids = ['simple-v0','human-v0'] # env ids are registered in outermost __init_
 
 if __name__ == "__main__":
 
-    experiment_num = 1
+    experiment_num = 2
 
     ## define path for saved model
     save_folder = PATH_SAVE+'/Experiment_'+str(experiment_num)+'/models'
@@ -43,15 +43,14 @@ if __name__ == "__main__":
 
     ## train model
     model = PPO("MlpPolicy", env, verbose=1,tensorboard_log=tb_log_path) #TODO: add custom policy args
-    model.learn(total_timesteps=500_000,tb_log_name=tb_log_subpath)
+    model.learn(total_timesteps=TRAIN_STEPS,tb_log_name=tb_log_subpath)
 
     ## save the model
     model.save(save_path)
     del model  # delete trained model to demonstrate loading
-
     
     ## evaluate the model
-    evaluate(save_path,experiment_num)
+    #evaluate(save_path,experiment_num)
 
     
     

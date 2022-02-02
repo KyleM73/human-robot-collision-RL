@@ -16,6 +16,7 @@ venv.bak/
 # Large files
 *.mp4
 *.zip
+*events.out.tfevents.*
 
 # Installer logs
 pip-log.txt

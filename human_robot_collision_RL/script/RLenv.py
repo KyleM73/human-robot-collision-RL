@@ -183,9 +183,6 @@ class myEnv(Env):
         # controller executes actions commanded from RL policy
         self.control = ctlrRobot(self.robot)
 
-        #TODO: only one of these apears to be used? see https://github.com/kiwi-sherbet/ASE389L/blob/main/script/playground.py
-        self.dictCmdParam = {"Offset": np.zeros(NUM_COMMANDS), 
-                            "Scale":  np.array([1] * NUM_COMMANDS)}
         self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
                             "Scale":  np.array([1] * NUM_ACTIONS)}
         
@@ -260,7 +257,6 @@ class myEnv(Env):
         dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel
 
         #check done conditions
-        #TODO: done should trigger after reaching goal configuration for X timesteps
         if sqrErrPose < 0.1 and sqrErrVel < 0.1:
             done = True
             dictRew["Goal"] = self.dictRewardCoeff["Goal"]
@@ -306,7 +302,7 @@ class myEnv(Env):
     def close(self):
         pass 
 
-    def setRecord(self,v=True,path='Experiment_1/videos'):
+    def setRecord(self,v=True,path='/Experiment_1/videos'):
         self.record = v
 
         if self.record:
@@ -388,6 +384,7 @@ class humanEnv(myEnv):
         Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ,hX,hY,hthZ [8+3h]
         Action Space -> vX,vY,vthZ [3]
         '''
+        self.training = training
         if training:
             self.client = bc.BulletClient(connection_mode=p.DIRECT)
         else:
@@ -548,12 +545,14 @@ class humanEnv(myEnv):
         pReward = 0
         if dictPressure is not None:
             for P in dictPressure.keys():
-                pReward += self.dictRewardCoeff["Collision"][P]*getPressureReward(dictPressure[P],maxP,maxCost)
+                #pReward += self.dictRewardCoeff["Collision"][P]*getPressureReward(dictPressure[P],maxP,maxCost)
+                pReward += -15.0
                 #TODO: 
                 #define dictPressureThreshold for each body part
                 #if dictPressure[P] > self.dictPressureThreshold[P]: done = True
-                if dictPressure[P] > maxP: done = True
-        print(pReward)
+                done = True
+                #if dictPressure[P] > maxP: done = True
+
         dictRew["Collision"] = pReward
 
         
@@ -562,11 +561,13 @@ class humanEnv(myEnv):
         dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
         dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel
 
-        if sqrErrPose < 0.1 and sqrErrVel < 0.1:
+        if sqrErrPose < 1 and sqrErrVel < 0.2:
             done = True
             dictRew["Goal"] = self.dictRewardCoeff["Goal"]
         elif self.cnt > self.maxSteps:
             dictRew["Fail"] = self.dictRewardCoeff["Fail"]
+            done = True
+        elif self.training and self.inCollision:
             done = True
         else:
             self.cnt+=1
@@ -593,7 +594,8 @@ if __name__ == "__main__":
     sim_time = 5 # [s]
     steps = int(sim_time/TIME_STEP)
     for _ in range(steps):
-        ob, reward, done, dictLog = env.step(TEST_POSE/np.linalg.norm(TEST_POSE)) #[m/s]
+        ob, reward, done, dictLog = env.step(TEST_POSE/(4*np.linalg.norm(TEST_POSE))) #[m/s]
+        #print(reward)
         time.sleep(TIME_STEP/REPEAT_ACTION)
 
 
