@@ -66,13 +66,23 @@ class ctlrRobot(object):
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
         #because we set vel instantly this is a non-issue, but is a big issue on the real robot
         #maybe policy -> smoother -> PD controller -> motor torques
-        #dVx = abs(self._vel[0] - action[0])
-        #dVy = abs(self._vel[1] - action[1])
-        #dVth = abs(self._angularRate[2] - action[2])
+        dVx = self._vel[0] - action[0]
+        dVy = self._vel[1] - action[1]
+        dVth = self._angularRate[2] - action[2]
 
-        #dV = [dVx,dVy,dVth]
+        dV = [dVx,dVy,dVth]
+        dVV = []
+        for v in dV:
+            #dont change velocity by more than 0.1 m/s at a time
+            if v > 0.5:
+                dVV.append(v - 0.5)
+            elif v < 0.01:
+                dVV.append(v + 0.5)
+            else:
+                dVV.append(v)
 
-        p.resetBaseVelocity(self.robot,[action[0],action[1],vZ],[0,0,action[2]])
+
+        p.resetBaseVelocity(self.robot,[dVV[0],dVV[1],vZ],[0,0,dVV[2]])
 
         return
     

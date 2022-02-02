@@ -24,8 +24,8 @@ def evaluate(model_path,exp_num=1):
         action, _states = modelTest.predict(obs)
         obs, rewards, dones, info = envTest.step(action)
         print(rewards)
-        if dones:
-            break
+        #if dones:
+        #    break
         envTest.render()
 
     print()
@@ -51,6 +51,7 @@ def evaluateMain(experiment_num=1):
         evaluate(model_path,experiment_num)
     except:
         print('no valid model provided')
+    
 
 if __name__=="__main__":
     experiment_num = 2

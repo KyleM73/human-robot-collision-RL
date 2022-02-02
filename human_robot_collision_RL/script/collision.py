@@ -103,12 +103,14 @@ class Collision:
             if contact_point[8] <= 0:
                 # Penetration or Contact
                 human_part_id = contact_point[3]
+                human_part_id_name = p.getJointInfo(self.human.body_id,human_part_id)[1].decode('UTF-8')
                 robot_part_id = contact_point[4]
                 pos_on_robot = contact_point[6] #this is sometimes greater than max height of robot? #TODO figure out why
                 if pos_on_robot[2] > H_ROBOT : pos_on_robot = np.array(pos_on_robot) - np.array([0,0,H_ROBOT])
                 n = -np.array(contact_point[7]) #normal FROM body TO robot
                 area = self._getArea(pos_on_robot,n,self.human.body_id,human_part_id)
                 if area < 0.0001 or contact_point[9] < 0.0001: #omit sufficently small areas that would create unboundedly large pressures
+                    FmagDict[human_part_id_name] = "Collision detected but no hit"
                     continue
                 
                 #EPFL-LASA collision method - assumes spring model
@@ -125,7 +127,7 @@ class Collision:
                 #    0,
                 #)
 
-                human_part_id_name = p.getJointInfo(self.human.body_id,human_part_id)[1].decode('UTF-8')
+                
                 FmagDict[human_part_id_name] = (contact_point[9],area)
 
         if FmagDict:

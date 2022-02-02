@@ -22,7 +22,7 @@ colDict = {
 }
 
 rewardDict = {
-    "Position"        :  -0.04,
+    "Position"        :   -0.1,#-0.02
     "Angle"           :  -0.01,
     "Velocity"        : -0.001,
     "AngularVelocity" :  -0.01,
