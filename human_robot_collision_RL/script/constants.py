@@ -13,7 +13,7 @@ TIME_STEP = 0.001
 REPEAT_INIT = 100 #repeats initalization in RLenv REPEAT_INIT times, see RLenv.($CLASS)._steup()
 REPEAT_ACTION = 10 #repeats action command REPEAT_ACTION times before updating with new action
 MAX_STEPS = 2000 #MAX_STEPS*TIME_STEP = wall time of simulation 
-TRAIN_STEPS = 5_000_000
+TRAIN_STEPS = 50_000#5_000_000
 #TODO: currently MAX_STEPS*TIME_STEP=2s, should probably be 30 irl with real max velocities - need real robot params
 
 

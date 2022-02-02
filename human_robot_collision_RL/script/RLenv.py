@@ -597,7 +597,7 @@ if __name__ == "__main__":
     sim_time = 5 # [s]
     steps = int(sim_time/TIME_STEP)
     for _ in range(steps):
-        ob, reward, done, dictLog = env.step(TEST_POSE/(4*np.linalg.norm(TEST_POSE))) #[m/s]
+        ob, reward, done, dictLog = env.step(-TEST_POSE/(4*np.linalg.norm(TEST_POSE))) #[m/s]
         #print(reward)
         time.sleep(TIME_STEP/REPEAT_ACTION)
 

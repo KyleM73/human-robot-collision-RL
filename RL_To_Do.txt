@@ -2,24 +2,26 @@ TODO:
 
 priority 0 -> 10:
 
+- fix collision handling (10)
 - fix early stopping script/RLenv/($CLASS)._evaluate() (9)
 - spawn human with gait (0)
+- spawn human laying down
 - custom MLP (7)
-- custom PPO params (4)
+- custom PPO params (6)
 - tune config/rewards.py (10)
-- plot collisions (5)
-- there's still some paths/values that are hardcoded (3)
+- plot collisions (4)
+- there's still some paths/values that are hardcoded (7)
     -> all params should either live in:
         - script/constants.py or
         - script/config/*.py
 - train Experiment 2 (humanEnv) (10)
-- Experiment 3: (6)
+- Experiment 3: (9)
     - train with RGB-D
     - custom CNN
         - Experiment 3v1
         - Experiment 3v2
     - new reward function
-- write function to automate calling tensorboard without copy and pasting (3)
+- write function to automate calling tensorboard without copy and pasting (5)
 - allow gravity to act on robot despite velocity setting scheme (9) (ideal vZ is 0 commanded, only effects of gravity)
 
 see additional TODO tags throughout the code
