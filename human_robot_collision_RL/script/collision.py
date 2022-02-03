@@ -192,7 +192,7 @@ class Collision:
         
         #omit rays from collision point to collision plane
         try:
-            hits = p.rayTestBatch(fromPos,toPos)
+            hits = p.rayTestBatch(fromPos,toPos,numThreads=0) #-1 single threaded, 0 all threads, n exactly n threads
         except:
             print("no hits")
             return 0
