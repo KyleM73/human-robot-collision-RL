@@ -5,16 +5,14 @@ import pybullet_utils.bullet_client as bc
 
 from stable_baselines3 import PPO
 
-from human_robot_collision_RL.script.RLenv import myEnv, humanEnv
+from human_robot_collision_RL.script.RLenv import myEnv, humanEnv, safetyEnv
 from human_robot_collision_RL.script.config.rewards import rewardDict
 from human_robot_collision_RL.script.constants import *
 
 def evaluate(model_path,exp_num=1):
-    #c = bc.BulletClient(connection_mode=p.GUI)
-    #p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 
-    envs = [myEnv,humanEnv]
-    envTest = envs[exp_num-1](False,rewardDict)
+    envs = [myEnv,humanEnv,safetyEnv]
+    envTest = envs[exp_num-1](True,rewardDict)
     modelTest = PPO.load(model_path, env=envTest)
 
     obs = envTest.reset()
@@ -23,7 +21,6 @@ def evaluate(model_path,exp_num=1):
     for i in range(2000):
         action, _states = modelTest.predict(obs)
         obs, rewards, dones, info = envTest.step(action)
-        print(rewards)
         #if dones:
         #    break
         envTest.render()
@@ -54,7 +51,7 @@ def evaluateMain(experiment_num=1):
     
 
 if __name__=="__main__":
-    experiment_num = 2
+    experiment_num = 3
     evaluateMain(experiment_num)
 
     

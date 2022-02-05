@@ -22,6 +22,16 @@ register(
         },
     )
 
+register(
+    id='safety-v0',
+    entry_point='human_robot_collision_RL.script:safetyEnv',
+    kwargs={
+        'training':True,
+        'reward':rewardDict,
+        'maxSteps':MAX_STEPS
+        },
+    )
+
 
 """
 THE HUMAN MODELS USED IN THIS SIMULATION WERE PRODUCED BY EPFL

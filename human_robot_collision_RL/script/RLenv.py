@@ -13,7 +13,8 @@ import cv2
 
 from human_robot_collision_RL.script.constants import *
 from human_robot_collision_RL.script.control import ctlrRobot
-from human_robot_collision_RL.script.config.rewards import rewardDict,getPressureReward
+from human_robot_collision_RL.script.config.rewards import *
+from human_robot_collision_RL.script.config.collision_params import *
 from human_robot_collision_RL.data.man import Man
 from human_robot_collision_RL.script.collision import Collision
 
@@ -73,7 +74,8 @@ def setupRobot(client, pose=[0,-1,0.5], ori=[0,0,0]):
     robotModel = p.loadURDF(
         PATH_DATA+"/trikey2.urdf",
         basePosition=pose,
-        baseOrientation=oriQ
+        baseOrientation=oriQ,
+        flags=p.URDF_USE_IMPLICIT_CYLINDER
         )
 
     p.changeDynamics(robotModel,-1,
@@ -115,7 +117,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
         #TODO: make humans non fixed
         #TODO: let humans walk (implimented but unused currently)
         humanPose = POSE + goalPose/2
-        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose)
+        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose,ori=ORI)
         modelsDict['human'] = humanModel
 
     return modelsDict
@@ -480,8 +482,8 @@ class humanEnv(myEnv):
     def _runSim(self, action):
 
         while not self.control.updateAction(self.dictActParam["Scale"] * action + self.dictActParam["Offset"]):
-            if not self.inCollision: 
-                self.control.step()
+            self.control.setCollision(self.inCollision)
+            self.control.step()
             #self.human.advance(POSE,p.getQuaternionFromEuler([0,0,0])) #used to advance human gait
             self.client.stepSimulation()
 
@@ -494,29 +496,21 @@ class humanEnv(myEnv):
         humanPose,humanOri = p.getBasePositionAndOrientation(self.human.body_id)
         obsHumanPose = [humanPose[i]/FIELD_RANGE for i in range(3)] #TODO: add body parts? velocity?
         
-        obs = np.concatenate((obsBodyPose[0:2], Q2E(obsBodyOri)[2]/(2*PI), obsVel[0:2], obsAngularRate[2], obsTarget[0:2],obsHumanPose[0:2],humanOri[2]), axis=None)
+        obs = np.concatenate((obsBodyPose[0:2], Q2E(obsBodyOri)[2]/(2*PI), obsVel[0:2], obsAngularRate[2], obsTarget[0:2],obsHumanPose[0:2],Q2E(humanOri)[2]/(2*PI)), axis=None)
 
         return obs
 
     def _getCollision(self):
 
-        F = self.collider.get_collision_force()
+        vel,_ = p.getBaseVelocity(self.robot)
 
-        PressureDict = {}
-
-        if F is not None:
+        Fdict = self.collider.get_collision_force(vel)
+        
+        if Fdict is not None:
             # ---- Collision Detected ----
             self.inCollision = True
-
-            for part in F.keys():
-                if isinstance(F[part],str): 
-                    PressureDict[part] = 0.00001 #small collision detected
-                    continue
-                (Fmag,area) = F[part]
-                #report Pressure in N/cm^2
-                PressureDict[part] = Fmag/(area*10000) #convert m^2 to cm^2
-
-            return PressureDict # [N/cm^2]
+            
+            return Fdict # [N]
         else:
             if self.inCollision:
                 self.inCollision = False
@@ -532,7 +526,8 @@ class humanEnv(myEnv):
         maxP = 100 #TODO: set maxP per part (need dict)
         maxCost = 150 #good value??
 
-        dictPressure = self._getCollision()
+        Fdict = self._getCollision()
+
         target = np.array(self._getTargets())
         bodyPose_, bodyOri_ = p.getBasePositionAndOrientation(self.robot)
         bodyPose = np.array(bodyPose_)
@@ -545,18 +540,18 @@ class humanEnv(myEnv):
         sqrErrPose = np.sum((target[0:2] - bodyPose[0:2])**2) + bodyPose[2]**2 
         sqrErrVel = np.sum(vel[0:2]**2) + angularRate[2]**2
 
-        pReward = 0
-        if dictPressure is not None:
-            for P in dictPressure.keys():
+        fReward = 0
+        if Fdict is not None:
+            for F in Fdict.keys():
                 #pReward += self.dictRewardCoeff["Collision"][P]*getPressureReward(dictPressure[P],maxP,maxCost)
-                pReward += -15.0
+                fReward += -15.0
                 #TODO: 
                 #define dictPressureThreshold for each body part
                 #if dictPressure[P] > self.dictPressureThreshold[P]: done = True
-                done = True
+                #done = True
                 #if dictPressure[P] > maxP: done = True
 
-        dictRew["Collision"] = pReward
+        dictRew["Collision"] = fReward
 
         
         dictState["Distance"] = sqrErrPose
@@ -587,18 +582,218 @@ class humanEnv(myEnv):
 
         return reward, done, dictLog
 
-    def setRecord(self,v=True,path='Experiment_2/videos'):
+    def setRecord(self,v=True,path='/Experiment_2/videos'):
+        super().setRecord(v,path) #calls method from myEnv with the given args
+
+
+class safetyEnv(humanEnv):
+    def __init__(self, training=True, reward={}, maxSteps=2000, humans=1):
+        '''
+        Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ,hX,hY,hthZ,[bpX,bpY,bpZ]x20 joints [8+3h+3*20*h] (71 for h=1)
+        Action Space -> vX,vY,vthZ [3]
+        '''
+        self.training = training
+        if training:
+            self.client = bc.BulletClient(connection_mode=p.DIRECT)
+        else:
+            self.client = bc.BulletClient(connection_mode=p.GUI)
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+
+        self.dictRewardCoeff = reward
+
+        self.humans = int(humans)
+        assert self.humans == 1, 'Error: incorrect number of humans provided'
+
+        obs_shape = 8 + 3*self.humans + 3*20*self.humans
+
+        self.observation_space = spaces.Box(low=-1,
+                                            high=1,
+                                            shape=(obs_shape,), 
+                                            dtype=np.float32
+                                            )
+
+        self.action_space = spaces.Box(low=-1,
+                                       high=1,
+                                       shape=(3,),
+                                       dtype=np.float32
+                                       )
+        self.maxSteps = maxSteps
+
+        self.record = False
+        self.recorder = None
+
+        self.inCollision = False
+
+    def _setup(self):
+
+        ## Initiate simulation
+        self.client.resetSimulation()
+
+        self.client.setAdditionalSearchPath(PATH_DATA)
+
+        ## Set up simulation
+        self.client.setTimeStep(TIME_STEP)
+        self.client.setPhysicsEngineParameter(numSolverIterations=int(30))
+        self.client.setPhysicsEngineParameter(enableConeFriction=0)
+        self.client.setGravity(0, 0, -9.8)
+
+        # creating environment
+        self.models = setupWorld(self.client,self.humans) ## use function including human
+        self.robot = self.models['robot']
+
+        self.goal = self.models['goal']
+
+        self.human = self.models['human']
+        self.human.reset()
+
+        #TODO: use to get person walking
+        #self.human.fix()
+        #self.human.resetGlobalTransformation() #can add args later, using defaults
+
+        self.nJ = p.getNumJoints(self.human.body_id)
+        self.linkList = [i for i in range(self.nJ)]
+
+        self.collider = Collision(
+            self.client._client,
+            robot=self.robot,
+            human=self.human
+        )
+
+        self.control = ctlrRobot(self.robot)
+        
+        self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
+                            "Scale":  np.array([1] * NUM_ACTIONS)}
+        
+        self.target = self._getTargets()
+
+        self.cnt = 0
+
+        for _ in range(REPEAT_INIT):
+            self.control.holdRobot()
+            self.client.stepSimulation()
+            self._getObs()
+        self._evaluate()
+
+    def step(self, action):
+
+        self._runSim(action)
+        ob = self._getObs()
+        reward, done, dictLog = self._evaluate(ob)
+
+        if self.record:
+            if self.recorder == None:
+                self._startRecorder()
+
+            self._writeRecorder()
+
+            if done:
+                self._closeRecorder()
+
+        return ob, reward, done, dictLog
+
+    def _getObs(self):
+
+        bodyPose, obsBodyOri = p.getBasePositionAndOrientation(self.robot)
+        obsBodyPose = [bodyPose[i]/FIELD_RANGE for i in range(3)]
+        obsVel,obsAngularRate = p.getBaseVelocity(self.robot)
+        obsTarget = [self._getTargets()[i]/FIELD_RANGE for i in range(3)]
+        humanPose,humanOri = p.getBasePositionAndOrientation(self.human.body_id)
+        obsHumanPose = [humanPose[i]/FIELD_RANGE for i in range(3)] #TODO: add body parts? velocity?
+        links = p.getLinkStates(self.human.body_id,self.linkList)
+        obsLinks = [l_/FIELD_RANGE for l in links for l_ in list(l[0])]
+
+        obs = np.concatenate((
+            obsBodyPose[0:2], 
+            Q2E(obsBodyOri)[2]/(2*PI), 
+            obsVel[0:2], 
+            obsAngularRate[2], 
+            obsTarget[0:2],
+            obsHumanPose[0:2],
+            Q2E(humanOri)[2]/(2*PI),
+            obsLinks
+            ), axis=None)
+
+        return obs
+
+    def _evaluate(self,ob=None):
+
+        done = False
+        dictLog = {}
+        dictRew = {}
+        dictState = {}
+
+        maxCost = 300 #good value??
+
+        Fdict = self._getCollision()
+
+        if ob is None:
+            ob = self._getObs()
+
+        bodyPose = FIELD_RANGE*np.array(ob[0:2])
+        bodyOri = 2*PI*np.array(ob[2])
+        bodyVel = np.array(ob[3:5])
+        bodyAngularVel = np.array(ob[5])
+        target = FIELD_RANGE*np.array(ob[6:8])
+
+       
+        sqrErrPose = np.sum((target - bodyPose)**2)
+        sqrErrAng = bodyOri**2 
+        sqrErrVel = np.sum(bodyVel**2)
+        sqrErrAngVel = bodyAngularVel**2
+
+        dictState["Position"] = sqrErrPose
+        dictState["Angle"] = sqrErrAng
+        dictState["Velocity"] = sqrErrVel
+        dictState["AngularVelocity"] = sqrErrAngVel
+
+        collisionReward = 0
+        if Fdict is not None:
+            for F in Fdict.keys():
+                (rew,maxCostFlag) = getCollisionReward(Fdict,F,collisionDictTransient,collisionDictQuasiStatic,maxCost)
+                collisionReward += self.dictRewardCoeff["Collision"][F] * rew
+                if maxCostFlag : done = True
+
+        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
+        dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
+        dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel
+        dictRew["AngularVelocity"] = self.dictRewardCoeff["AngularVelocity"] * sqrErrAngVel
+        dictRew["Collision"] = collisionReward
+
+        if sqrErrPose < 0.5 and sqrErrVel < 0.2:
+            done = True
+            dictRew["Goal"] = self.dictRewardCoeff["Goal"]
+        elif self.cnt > self.maxSteps:
+            dictRew["Fail"] = self.dictRewardCoeff["Fail"]
+            done = True
+        else:
+            self.cnt+=1
+
+        reward = 0
+        for rew in dictRew.values():
+            reward += rew
+
+        dictRew["Sum"] = reward
+
+        if done:
+            dictLog["Done"] = 1
+        dictLog["Reward"] = dictRew
+        dictLog["State"] = dictState
+
+        return reward, done, dictLog
+
+    def setRecord(self,v=True,path='/Experiment_3/videos'):
         super().setRecord(v,path) #calls method from myEnv with the given args
 
 
 if __name__ == "__main__": 
-    env = humanEnv(False,reward=rewardDict)
+    env = safteyEnv(False,reward=rewardDict)
     obs = env.reset()
-    sim_time = 5 # [s]
+    sim_time = 2 # [s]
     steps = int(sim_time/TIME_STEP)
+    act = [0,-1,0]
+    env.setRecord(True)
     for _ in range(steps):
-        ob, reward, done, dictLog = env.step(-TEST_POSE/(4*np.linalg.norm(TEST_POSE))) #[m/s]
-        #print(reward)
+        ob, reward, done, dictLog = env.step(act) #[m/s]
         time.sleep(TIME_STEP/REPEAT_ACTION)
 
 

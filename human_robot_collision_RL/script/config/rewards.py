@@ -31,8 +31,26 @@ rewardDict = {
     "Collision"       : colDict
 }
 
-def getPressureReward(P,maxP=100,maxCost=150):
-    return maxCost
-    #if P < maxP:
-    #    return P
-    #return maxCost
+def getCollisionReward(F,partName,transDict,quasiStaticDict,maxCost):
+    if F[partName][1] == "quasi-static":
+        if F[partName][0] > quasiStaticDict[partName]:
+            return (maxCost,True)
+        else:
+            return (F[partName][0],False)
+    elif F[partName][1] == "transient":
+        if F[partName][0] > transDict[partName]:
+            return (maxCost,True)
+        else:
+            return (F[partName][0],False)
+    else:
+        print("Error: bad collision type")
+        return (maxCost,True)
+
+
+
+
+
+
+
+
+

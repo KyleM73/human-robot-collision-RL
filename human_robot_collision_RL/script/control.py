@@ -17,6 +17,7 @@ class ctlrRobot(object):
         #self.constraintID = p.createConstraint(robot, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0])
 
         self._flagAction = True
+        self.inCollision = False
 
         self.reset()
         self.rcvObservation()
@@ -66,6 +67,8 @@ class ctlrRobot(object):
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
         #because we set vel instantly this is a non-issue, but is a big issue on the real robot
         #maybe policy -> smoother -> PD controller -> motor torques
+
+        '''
         dVx = self._vel[0] - action[0]
         dVy = self._vel[1] - action[1]
         dVth = self._angularRate[2] - action[2]
@@ -82,7 +85,11 @@ class ctlrRobot(object):
                 dVV.append(v)
 
 
+
         p.resetBaseVelocity(self.robot,[dVV[0],dVV[1],vZ],[0,0,dVV[2]])
+        '''
+        if not self.inCollision:
+            p.resetBaseVelocity(self.robot,[action[0],action[1],vZ],[0,0,action[2]])
 
         return
     
@@ -114,6 +121,9 @@ class ctlrRobot(object):
             if self._cntStep % REPEAT_ACTION == 0:
                 self._flagAction = True
             return False
+
+    def setCollision(self, flag):
+        self.inCollision = flag
 
 
 
