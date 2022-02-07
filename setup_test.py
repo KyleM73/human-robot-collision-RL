@@ -11,6 +11,7 @@ if __name__=="__main__":
         import sys
         import os
         import stable_baselines3
+        import torch
         import human_robot_collision_RL.script.RLenv
         import human_robot_collision_RL.data.man
         print("SETUP PASSED")

@@ -36,8 +36,13 @@ M_ROBOT = 4.53592 #[kg]
 
 ## Human configuration
 
-POSE = [0,0,1.112] #[0,0,0.25] #trial and error, works for man, child not tested
-ORI = [PI/2,0,PI] #[PI,0,PI]
+POSE = [0,0,0.25]#[0,0,1.112] #[0,0,0.25] #trial and error, works for man, child not tested
+ORI = [PI,0,PI]#[PI/2,0,PI] #[PI,0,PI]
+#(POSE,ORI) tuple for standing and laying on back config
+INIT_POSE_LIST = [
+    ([0,0,1.112],[PI/2,0,0]), #standing
+    ([0,0,0.15] ,[PI,PI,0])   #laying on back (PI,0,0 for stomach)
+    ]
 M_HUMAN = 75
 TEST_POSE = np.array([0,-5,0])
 

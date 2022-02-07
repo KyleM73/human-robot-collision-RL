@@ -11,6 +11,7 @@ setup(name='human_robot_collision_RL',
             'pybullet',
             'datetime',
             'stable_baselines3',
-            'tensorflow'
+            'tensorflow',
+            'torch'
             ] #And any other dependencies required
 )

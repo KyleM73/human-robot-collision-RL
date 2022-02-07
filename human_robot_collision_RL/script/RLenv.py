@@ -116,8 +116,16 @@ def setupWorld(client,humans=None,humanPose=POSE):
         #TODO: add multiple human options
         #TODO: make humans non fixed
         #TODO: let humans walk (implimented but unused currently)
-        humanPose = POSE + goalPose/2
-        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose,ori=ORI)
+        rn = 2*np.random.random_sample()-1 #uniform random interval [-1,1)
+        if rn < 0: 
+            humanPose = INIT_POSE_LIST[0][0] + goalPose/2
+            humanOri = np.array(INIT_POSE_LIST[0][1]) + PI*np.array([0,0,rn])
+        else:
+            humanPose = INIT_POSE_LIST[1][0] + goalPose/2
+            humanOri = np.array(INIT_POSE_LIST[1][1]) + PI*np.array([0,0,rn])
+
+        #humanPose = POSE + goalPose/2
+        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose,ori=humanOri)
         modelsDict['human'] = humanModel
 
     return modelsDict
@@ -786,7 +794,7 @@ class safetyEnv(humanEnv):
 
 
 if __name__ == "__main__": 
-    env = safteyEnv(False,reward=rewardDict)
+    env = safetyEnv(False,reward=rewardDict)
     obs = env.reset()
     sim_time = 2 # [s]
     steps = int(sim_time/TIME_STEP)
