@@ -5,7 +5,6 @@ priority 0 -> 10:
 - fix collision handling (10)
 - fix early stopping script/RLenv/($CLASS)._evaluate() (9)
 - spawn human with gait (0)
-- spawn human laying down
 - custom MLP (7)
 - custom PPO params (6)
 - tune config/rewards.py (10)
