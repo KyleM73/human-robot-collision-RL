@@ -1,17 +1,17 @@
-import numpy as np
-
 import pybullet as p
 from pybullet import getEulerFromQuaternion as Q2E
+
+import numpy as np
 
 from human_robot_collision_RL.script.constants import *
 
 class ctlrRobot(object):
-    def __init__(self, robot):
+    def __init__(self, robot, actions=NUM_ACTIONS):
 
         self.defaultAction = np.array(DEFAULT_ACTION) # see constants
-        self.minVel = np.array([-1] * NUM_ACTIONS)
-        self.maxVel = np.array([1] * NUM_ACTIONS)
-        self.max_dV = 1
+        self.minVel = np.array([-1] * actions)
+        self.maxVel = np.array([1] * actions)
+        #self.max_dV = 1
 
         self.robot = robot
         #self.constraintID = p.createConstraint(robot, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0])
@@ -29,7 +29,7 @@ class ctlrRobot(object):
         ## Initiate internal variables
 
         self._cntStep = 0
-        self._action = np.zeros(3) #action space [vX vY vTh]
+        self._action = np.zeros(NUM_ACTIONS) #action space [vX vY vTh]
 
         self.rcvObservation()
 
@@ -61,7 +61,7 @@ class ctlrRobot(object):
 
         # note: setting the velocity like this violates the simulation dynamics 
         # and will not yield accurate collisions after the initial contact
-        vZ = self._vel[2] - 9.8*TIME_STEP
+        vZ = self._vel[2] - GRAVITY[2]*TIME_STEP
 
         #TODO: set max acceleration (change in velocity)
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel

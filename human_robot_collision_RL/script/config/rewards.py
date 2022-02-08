@@ -31,12 +31,17 @@ rewardDict = {
     "Collision"       : colDict
 }
 
+max_cost = 300 #good value??
+vel_penalty_radius = 1
+pose_radius = 0.5
+vel_radius = 0.2
+
 def getCollisionReward(F,partName,transDict,quasiStaticDict,maxCost):
     if F[partName][1] == "quasi-static":
-        if F[partName][0] > quasiStaticDict[partName]:
+        if F[partName][0]/2 > quasiStaticDict[partName]: #F was multiplied by 2 to get transient force, see collision.get_force()
             return (maxCost,True)
         else:
-            return (F[partName][0],False)
+            return (F[partName][0]/2,False)
     elif F[partName][1] == "transient":
         if F[partName][0] > transDict[partName]:
             return (maxCost,True)

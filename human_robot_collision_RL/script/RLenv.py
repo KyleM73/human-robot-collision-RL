@@ -11,128 +11,19 @@ from gym import spaces, Env
 from stable_baselines3.common.env_checker import check_env
 import cv2
 
+from human_robot_collision_RL.data.man import Man
+
+from human_robot_collision_RL.script.collision import Collision
 from human_robot_collision_RL.script.constants import *
 from human_robot_collision_RL.script.control import ctlrRobot
-from human_robot_collision_RL.script.config.rewards import *
+from human_robot_collision_RL.script.util import *
+
 from human_robot_collision_RL.script.config.collision_params import *
-from human_robot_collision_RL.data.man import Man
-from human_robot_collision_RL.script.collision import Collision
-
-def setupGoal(client, pose):
-    c = client
-    p.setAdditionalSearchPath(pybullet_data.getDataPath())  
-
-    meshScale = [1, 1, 1]
-    #the visual shapes and collision shapes can be re-used by all createMultiBody instances (instancing)
-    idVisualShape = p.createVisualShape(
-        shapeType=p.GEOM_MESH,
-        halfExtents=[0, 0, 0],
-        fileName="duck.obj",
-        visualFrameOrientation=p.getQuaternionFromEuler([PI/2,0,PI/2]),
-        meshScale=meshScale)
-
-    idCollisionShape = None
-
-    ##TODO: debug, doesn't always face the right direction, duck should point towards robot's initial starting loc
-    #pose = [0,-1,0]
-    goalPosition = [pose[0], pose[1], 0.025]
-    goalPoseScaled = pose/np.linalg.norm(goalPosition)
-    ref = np.array([1,0,0])
-    th = np.arccos(np.dot(ref[0:2],goalPoseScaled[0:2]))
-    if pose[1] >= 0:
-        th -= PI/2
-    else:
-        th += PI/2
-        if pose[0] > 0:
-            th += PI/2
-        elif pose[0] < 0:
-            th -= PI/2
-    #print(th)
-    goalModel = p.createMultiBody(
-        baseVisualShapeIndex=idVisualShape, 
-        basePosition=goalPosition,
-        baseOrientation=p.getQuaternionFromEuler([0,0,th])
-        )
-
-    return goalModel
-
-
-def setupRobot(client, pose=[0,-1,0.5], ori=[0,0,0]):
-    '''
-    Args:
-        client: pybullet client
-        pose  : XYZ position of the robot [list]
-        ori   : orientation of the robot in XYZ euler angles [list]
-
-    Out:
-        robotModel : pybullet model of the robot
-    '''
-    c = client 
-
-    oriQ = p.getQuaternionFromEuler(ori)
-
-    robotModel = p.loadURDF(
-        PATH_DATA+"/trikey2.urdf",
-        basePosition=pose,
-        baseOrientation=oriQ,
-        flags=p.URDF_USE_IMPLICIT_CYLINDER
-        )
-
-    p.changeDynamics(robotModel,-1,
-        lateralFriction=0,
-        spinningFriction=0, #TODO: are these necessary? need to test
-        rollingFriction=0
-        )
-
-    return robotModel
-
-
-def setupWorld(client,humans=None,humanPose=POSE):
-    c = client
-
-    shapePlane = p.createCollisionShape(shapeType = p.GEOM_PLANE)
-    terrainModel  = p.createMultiBody(0, shapePlane)
-    p.changeDynamics(terrainModel, -1, lateralFriction=1.0) 
-
-    #sample goal poses such that the goal is at minimum 4m from the robot
-    goalDist = 0
-    while goalDist < 4:
-        goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
-        goalPose[2] = 0 #set z coord
-        goalDist = np.linalg.norm(goalPose)
-    #goalPose = TEST_POSE #FOR DEBUGGING ONLY
-    goalModel = setupGoal(c, goalPose)
-
-    robotModel = setupRobot(c, [0., 0., 0.5], [0, 0, 0])
-
-    modelsDict = {
-        'robot': robotModel,
-        'terrain': terrainModel,
-        'goal': goalModel,
-        }
-
-    if isinstance(humans,int):
-        ## make human here
-        #TODO: add multiple human options
-        #TODO: make humans non fixed
-        #TODO: let humans walk (implimented but unused currently)
-        rn = 2*np.random.random_sample()-1 #uniform random interval [-1,1)
-        if rn < 0: 
-            humanPose = INIT_POSE_LIST[0][0] + goalPose/2
-            humanOri = np.array(INIT_POSE_LIST[0][1]) + PI*np.array([0,0,rn])
-        else:
-            humanPose = INIT_POSE_LIST[1][0] + goalPose/2
-            humanOri = np.array(INIT_POSE_LIST[1][1]) + PI*np.array([0,0,rn])
-
-        #humanPose = POSE + goalPose/2
-        humanModel = Man(c._client,partitioned=False,self_collisions=False,fixed=1,timestep=TIME_STEP,pose=humanPose,ori=humanOri)
-        modelsDict['human'] = humanModel
-
-    return modelsDict
+from human_robot_collision_RL.script.config.rewards import *
 
 
 class myEnv(Env):
-    def __init__(self, training=True, reward={}, maxSteps=2000):
+    def __init__(self, training=True, reward=rewardDict, maxSteps=MAX_STEPS):
         '''
         Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ [8]
         Action Space -> vX,vY,vthZ [3]
@@ -153,7 +44,7 @@ class myEnv(Env):
 
         self.action_space = spaces.Box(low=-1,
                                        high=1,
-                                       shape=(3,),
+                                       shape=(NUM_ACTIONS,),
                                        dtype=np.float32
                                        )
         self.maxSteps = maxSteps
@@ -182,7 +73,7 @@ class myEnv(Env):
         self.client.setTimeStep(TIME_STEP)
         self.client.setPhysicsEngineParameter(numSolverIterations=int(30))
         self.client.setPhysicsEngineParameter(enableConeFriction=0)
-        self.client.setGravity(0, 0, -9.8)
+        self.client.setGravity(GRAVITY[0],GRAVITY[1],GRAVITY[2])
 
         # creating environment
         self.models = setupWorld(self.client)
@@ -312,16 +203,17 @@ class myEnv(Env):
     def close(self):
         pass 
 
-    def setRecord(self,v=True,path='/Experiment_1/videos'):
+    def setRecord(self,v=True,exp_num=EXP_NUM):
         self.record = v
 
         if self.record:
-            self._cameraDist = 10.0
-            self._cameraYaw = 0
-            self._cameraPitch = -30
-            self._renderWidth = 480
-            self._renderHeight = 360
+            self._cameraDist = CAM_DIST
+            self._cameraYaw = CAM_YAW
+            self._cameraPitch = CAM_PITCH
+            self._renderWidth = CAM_WIDTH
+            self._renderHeight = CAM_HEIGHT
             self._videoFormat = cv2.VideoWriter_fourcc(*'mp4v')
+            path = "/Experiment_"+str(exp_num)+"/videos"
             self._videoSavePath = PATH_SAVE+path #do not end in "/", see _startRecord()
             self.recorder = None
 
@@ -334,8 +226,8 @@ class myEnv(Env):
 
     def _startRecorder(self):
 
-        path = "{}/{}.mp4".format(self._videoSavePath, datetime.datetime.now().strftime("%m%d_%H%M"))
-        self.recorder = cv2.VideoWriter(path, self._videoFormat, 30, (self._renderWidth, self._renderHeight))
+        path = "{}/{}.mp4".format(self._videoSavePath, DT)
+        self.recorder = cv2.VideoWriter(path, self._videoFormat, CAM_FPS, (self._renderWidth, self._renderHeight))
 
 
     def _closeRecorder(self):
@@ -361,10 +253,10 @@ class myEnv(Env):
             roll=0,
             upAxisIndex=2)
         projMatrix = self.client.computeProjectionMatrixFOV(
-            fov=60,
+            fov=CAM_FOV,
             aspect=float(self._renderWidth) / self._renderHeight,
-            nearVal=0.1,
-            farVal=100.0)
+            nearVal=CAM_NEARVAL,
+            farVal=CAM_FARVAL)
         (_, _, px, _, _) = self.client.getCameraImage(
             width=self._renderWidth,
             height=self._renderHeight,
@@ -387,9 +279,8 @@ class myEnv(Env):
         sig = np.where(x < 0, np.exp(x)/(1 + np.exp(x)), 1/(1 + np.exp(-x)))
         return sig   
 
-
 class humanEnv(myEnv):
-    def __init__(self, training=True, reward={}, maxSteps=2000, humans=1):
+    def __init__(self, training=True, reward=rewardDict, maxSteps=MAX_STEPS, humans=NUM_HUMANS):
         '''
         Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ,hX,hY,hthZ [8+3h]
         Action Space -> vX,vY,vthZ [3]
@@ -414,7 +305,7 @@ class humanEnv(myEnv):
 
         self.action_space = spaces.Box(low=-1,
                                        high=1,
-                                       shape=(3,),
+                                       shape=(NUM_ACTIONS,),
                                        dtype=np.float32
                                        )
         self.maxSteps = maxSteps
@@ -435,7 +326,7 @@ class humanEnv(myEnv):
         self.client.setTimeStep(TIME_STEP)
         self.client.setPhysicsEngineParameter(numSolverIterations=int(30))
         self.client.setPhysicsEngineParameter(enableConeFriction=0)
-        self.client.setGravity(0, 0, -9.8)
+        self.client.setGravity(GRAVITY[0],GRAVITY[1],GRAVITY[2])
 
         # creating environment
         self.models = setupWorld(self.client,self.humans) ## use function including human
@@ -445,6 +336,7 @@ class humanEnv(myEnv):
 
         self.human = self.models['human']
         self.human.reset()
+        self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
         #TODO: use to get person walking
         #self.human.fix()
         #self.human.resetGlobalTransformation() #can add args later, using defaults
@@ -570,7 +462,7 @@ class humanEnv(myEnv):
         if sqrErrPose < 1 and sqrErrVel < 0.2:
             done = True
             dictRew["Goal"] = self.dictRewardCoeff["Goal"]
-        elif self.cnt > self.maxSteps:
+        elif self.cnt > self.maxSteps or p.getBasePositionAndOrientation(self.robot)[0][2] > self.initZ + MAX_HEIGHT_DEVIATION:
             dictRew["Fail"] = self.dictRewardCoeff["Fail"]
             done = True
         elif self.training and self.inCollision:
@@ -589,10 +481,6 @@ class humanEnv(myEnv):
         dictLog["State"] = dictState
 
         return reward, done, dictLog
-
-    def setRecord(self,v=True,path='/Experiment_2/videos'):
-        super().setRecord(v,path) #calls method from myEnv with the given args
-
 
 class safetyEnv(humanEnv):
     def __init__(self, training=True, reward={}, maxSteps=2000, humans=1):
@@ -622,7 +510,7 @@ class safetyEnv(humanEnv):
 
         self.action_space = spaces.Box(low=-1,
                                        high=1,
-                                       shape=(3,),
+                                       shape=(NUM_ACTIONS,),
                                        dtype=np.float32
                                        )
         self.maxSteps = maxSteps
@@ -643,7 +531,7 @@ class safetyEnv(humanEnv):
         self.client.setTimeStep(TIME_STEP)
         self.client.setPhysicsEngineParameter(numSolverIterations=int(30))
         self.client.setPhysicsEngineParameter(enableConeFriction=0)
-        self.client.setGravity(0, 0, -9.8)
+        self.client.setGravity(GRAVITY[0],GRAVITY[1],GRAVITY[2])
 
         # creating environment
         self.models = setupWorld(self.client,self.humans) ## use function including human
@@ -653,6 +541,7 @@ class safetyEnv(humanEnv):
 
         self.human = self.models['human']
         self.human.reset()
+        self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
 
         #TODO: use to get person walking
         #self.human.fix()
@@ -730,7 +619,7 @@ class safetyEnv(humanEnv):
         dictRew = {}
         dictState = {}
 
-        maxCost = 300 #good value??
+        maxCost = max_cost #see rewards.max_cost
 
         Fdict = self._getCollision()
 
@@ -743,7 +632,6 @@ class safetyEnv(humanEnv):
         bodyAngularVel = np.array(ob[5])
         target = FIELD_RANGE*np.array(ob[6:8])
 
-       
         sqrErrPose = np.sum((target - bodyPose)**2)
         sqrErrAng = bodyOri**2 
         sqrErrVel = np.sum(bodyVel**2)
@@ -763,14 +651,19 @@ class safetyEnv(humanEnv):
 
         dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
         dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
-        dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel
+        #only penalize velocity near the target
+        if sqrErrPose < vel_penalty_radius: #see rewards.vel_penalty_radius
+            dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel   
+        else:
+            dictRew["Velocity"] = 0
+        
         dictRew["AngularVelocity"] = self.dictRewardCoeff["AngularVelocity"] * sqrErrAngVel
         dictRew["Collision"] = collisionReward
 
-        if sqrErrPose < 0.5 and sqrErrVel < 0.2:
+        if sqrErrPose < pose_radius and sqrErrVel < vel_radius: #see rewards.($VAR)
             done = True
             dictRew["Goal"] = self.dictRewardCoeff["Goal"]
-        elif self.cnt > self.maxSteps:
+        elif self.cnt > self.maxSteps or p.getBasePositionAndOrientation(self.robot)[0][2] > self.initZ + MAX_HEIGHT_DEVIATION:
             dictRew["Fail"] = self.dictRewardCoeff["Fail"]
             done = True
         else:
@@ -789,20 +682,15 @@ class safetyEnv(humanEnv):
 
         return reward, done, dictLog
 
-    def setRecord(self,v=True,path='/Experiment_3/videos'):
-        super().setRecord(v,path) #calls method from myEnv with the given args
-
-
 if __name__ == "__main__": 
     env = safetyEnv(False,reward=rewardDict)
     obs = env.reset()
-    sim_time = 2 # [s]
-    steps = int(sim_time/TIME_STEP)
-    act = [0,-1,0]
-    env.setRecord(True)
-    for _ in range(steps):
-        ob, reward, done, dictLog = env.step(act) #[m/s]
-        time.sleep(TIME_STEP/REPEAT_ACTION)
+    act = [0,-1,0] #[m/s]
+
+    #env.setRecord(True)
+    for _ in range(MAX_STEPS):
+        ob, reward, done, dictLog = env.step(act)
+        time.sleep(TIME_STEP)
 
 
 

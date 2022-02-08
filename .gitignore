@@ -17,7 +17,7 @@ venv.bak/
 *.mp4
 *.zip
 *events.out.tfevents.*
-*/log/*.py
+*/log/*/*/*.py
 
 # Installer logs
 pip-log.txt

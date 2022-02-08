@@ -1,9 +1,10 @@
-from human_robot_collision_RL.script.constants import *
-from human_robot_collision_RL.script.config.collision_params import *
+import pybullet as p
 
 import numpy as np
-import pybullet as p
-import time
+
+from human_robot_collision_RL.script.constants import *
+
+from human_robot_collision_RL.script.config.collision_params import *
 
 class Collision:
     def __init__(
@@ -30,7 +31,7 @@ class Collision:
         'left_shin_to_left_foot'
         ]
 
-    def get_collision_force(self,vel=np.array([0,1.0,0])):
+    def get_collision_force(self,vel):
         """Get collision force in case of collision
 
         Returns
