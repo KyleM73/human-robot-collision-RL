@@ -37,9 +37,6 @@ if __name__ == "__main__":
     tb_log_subpath = '{}'.format(DT)
     log_path_full = '{}/{}_1'.format(tb_log_path,tb_log_subpath)
 
-    ## save relevant files with hyperparams
-    copy_reward_gains(log_path_full)
-
     ## set the environment params
     env_id = ENV_IDS[EXP_NUM-1]
     num_cpu = CPU_NUM #machine dependent 
@@ -57,6 +54,9 @@ if __name__ == "__main__":
     ## save the model
     model.save(save_path)
     del model  # delete trained model to demonstrate loading
+
+    ## save relevant files with hyperparams
+    copy_reward_gains(log_path_full) #be careful if training is stopped
     
     
     ## evaluate the model

@@ -3,6 +3,7 @@ TODO:
 priority 0 -> 10:
 
 - tune config/rewards.py / train Experiment 2 (safetyEnv) model (10)
+- code for training continuation (9)
 - Experiment 3: (9)
     - train with RGB-D
     - custom CNN
