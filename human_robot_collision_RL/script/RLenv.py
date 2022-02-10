@@ -1,3 +1,5 @@
+import os
+
 import pybullet as p
 from pybullet import getEulerFromQuaternion as Q2E
 import pybullet_utils.bullet_client as bc
@@ -203,7 +205,7 @@ class myEnv(Env):
     def close(self):
         pass 
 
-    def setRecord(self,v=True,exp_num=EXP_NUM):
+    def setRecord(self,v=True,log_path=None,exp_num=EXP_NUM):
         self.record = v
 
         if self.record:
@@ -213,8 +215,10 @@ class myEnv(Env):
             self._renderWidth = CAM_WIDTH
             self._renderHeight = CAM_HEIGHT
             self._videoFormat = cv2.VideoWriter_fourcc(*'mp4v')
-            path = "/Experiment_"+str(exp_num)+"/videos"
-            self._videoSavePath = PATH_SAVE+path #do not end in "/", see _startRecord()
+            if log_path is not None:
+                self._videoSavePath = log_path #do not end in "/", see _startRecord()
+            else:
+                print("error: no video save path")
             self.recorder = None
 
 
@@ -336,7 +340,6 @@ class humanEnv(myEnv):
 
         self.human = self.models['human']
         self.human.reset()
-        self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
         #TODO: use to get person walking
         #self.human.fix()
         #self.human.resetGlobalTransformation() #can add args later, using defaults
@@ -357,9 +360,10 @@ class humanEnv(myEnv):
         self.cnt = 0
 
         for _ in range(REPEAT_INIT):
-            self.control.holdRobot()
+            #self.control.holdRobot()
             self.client.stepSimulation()
             self._getObs()
+        self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
         self._evaluate()
 
     def step(self, action):
@@ -519,6 +523,7 @@ class safetyEnv(humanEnv):
         self.recorder = None
 
         self.inCollision = False
+        self.lastAction = np.array([0,0,0])
 
     def _setup(self):
 
@@ -566,7 +571,7 @@ class safetyEnv(humanEnv):
         self.cnt = 0
 
         for _ in range(REPEAT_INIT):
-            self.control.holdRobot()
+            #self.control.holdRobot()
             self.client.stepSimulation()
             self._getObs()
         self._evaluate()
@@ -575,7 +580,7 @@ class safetyEnv(humanEnv):
 
         self._runSim(action)
         ob = self._getObs()
-        reward, done, dictLog = self._evaluate(ob)
+        reward, done, dictLog = self._evaluate(ob,action)
 
         if self.record:
             if self.recorder == None:
@@ -612,7 +617,7 @@ class safetyEnv(humanEnv):
 
         return obs
 
-    def _evaluate(self,ob=None):
+    def _evaluate(self,ob=None,action=None):
 
         done = False
         dictLog = {}
@@ -649,6 +654,18 @@ class safetyEnv(humanEnv):
                 collisionReward += self.dictRewardCoeff["Collision"][F] * rew
                 if maxCostFlag : done = True
 
+        smoothRew = 0
+        if action is not None:
+            diffAction = abs(action - self.lastAction)
+            for i in range(action.shape[0]):
+                if diffAction[i] < MAX_ACTION_DIFF:
+                    smoothRew += self.dictRewardCoeff["ActionSmooth"]*diffAction[i]
+                else:
+                    smoothRew += self.dictRewardCoeff["ActionNotSmooth"]*diffAction[i]
+            self.lastAction = action
+        dictRew["Action"] = smoothRew
+
+
         dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
         dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
         #only penalize velocity near the target
@@ -660,10 +677,13 @@ class safetyEnv(humanEnv):
         dictRew["AngularVelocity"] = self.dictRewardCoeff["AngularVelocity"] * sqrErrAngVel
         dictRew["Collision"] = collisionReward
 
+        if p.getBasePositionAndOrientation(self.robot)[0][2] > self.initZ + MAX_HEIGHT_DEVIATION:
+            print("warning: height deviation detected")
+
         if sqrErrPose < pose_radius and sqrErrVel < vel_radius: #see rewards.($VAR)
             done = True
             dictRew["Goal"] = self.dictRewardCoeff["Goal"]
-        elif self.cnt > self.maxSteps or p.getBasePositionAndOrientation(self.robot)[0][2] > self.initZ + MAX_HEIGHT_DEVIATION:
+        elif self.cnt > self.maxSteps:
             dictRew["Fail"] = self.dictRewardCoeff["Fail"]
             done = True
         else:
@@ -685,7 +705,7 @@ class safetyEnv(humanEnv):
 if __name__ == "__main__": 
     env = safetyEnv(False,reward=rewardDict)
     obs = env.reset()
-    act = [0,-1,0] #[m/s]
+    act = np.array([0,-1,0]) #[m/s]
 
     #env.setRecord(True)
     for _ in range(MAX_STEPS):

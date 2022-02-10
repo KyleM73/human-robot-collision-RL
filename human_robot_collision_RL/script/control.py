@@ -61,8 +61,8 @@ class ctlrRobot(object):
 
         # note: setting the velocity like this violates the simulation dynamics 
         # and will not yield accurate collisions after the initial contact
-        vZ = self._vel[2] - GRAVITY[2]*TIME_STEP
-
+        #vZ = self._vel[2] - GRAVITY[2]*TIME_STEP
+        vZ = 0
         #TODO: set max acceleration (change in velocity)
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
         #because we set vel instantly this is a non-issue, but is a big issue on the real robot

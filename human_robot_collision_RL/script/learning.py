@@ -29,8 +29,8 @@ def makeEnvs(env_id):
 if __name__ == "__main__":
 
     ## define path for saved model
-    save_folder = PATH_SAVE+'/Experiment_'+str(EXP_NUM)+'/models'
-    save_path = '{}/{}'.format(save_folder,DT)
+    #save_folder = PATH_SAVE+'/Experiment_'+str(EXP_NUM)+'/models'
+    #save_path = '{}/{}'.format(save_folder,DT)
 
     ## define path for tensorboard logging
     tb_log_path = PATH_LOG+'/Experiment_'+str(EXP_NUM)
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     print("Model train time: "+str(datetime.timedelta(seconds=endTime-startTime)))
 
     ## save the model
+    save_path = '{}/{}'.format(log_path_full,DT)
     model.save(save_path)
     del model  # delete trained model to demonstrate loading
 
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     
     
     ## evaluate the model
-    evaluate(save_path,EXP_NUM)
+    evaluate(DT,log_path_full,EXP_NUM)
 
     
     

@@ -11,14 +11,14 @@ FIELD_RANGE = 10 #may expand (to 20?)
 
 ## Simulation params ##
 
-EXP_NUM = 2 #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
-CPU_NUM = 24 # machine dependent
+EXP_NUM = 3 #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
+CPU_NUM = 1 # machine dependent
 ENV_IDS = ['simple-v0','human-v0','safety-v0'] # env ids are registered in outermost __init__.py
 TRAIN_STEPS = 5_000_000
 DT = datetime.datetime.now().strftime('%m%d_%H%M')
 MIN_TARGET_DIST = 4
-POLICY_KWARGS = dict(net_arch=[64, 64, dict(vf=[], pi=[])]) #vf and pi are layers not shared and unique to the value function and policy, respectively
-
+POLICY_KWARGS = dict(net_arch=[128, 128, dict(vf=[8], pi=[16])]) #vf and pi are layers not shared and unique to the value function and policy, respectively
+MAX_ACTION_DIFF = 0.5
 
 ## Simulation configuartion ##
 
