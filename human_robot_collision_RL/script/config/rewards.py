@@ -22,14 +22,14 @@ colDict = {
 }
 
 rewardDict = {
-    "Position"        :     -2,#-0.02
+    "Position"        :     10,#-0.02
     "Angle"           :  -0.01,
     "Velocity"        : -0.001,
     "AngularVelocity" :  -0.01,
     "Fail"            :    -10,
     "Goal"            :     50,
-    "ActionSmooth"    :      2,
-    "ActionNotSmooth" :     -2,
+    "ActionSmooth"    :    0.1,
+    "ActionNotSmooth" :   -0.1,
     "Collision"       : colDict
 }
 

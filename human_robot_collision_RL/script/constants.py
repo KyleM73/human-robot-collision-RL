@@ -12,7 +12,7 @@ FIELD_RANGE = 10 #may expand (to 20?)
 ## Simulation params ##
 
 EXP_NUM = 3 #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
-CPU_NUM = 1 # machine dependent
+CPU_NUM = 36 # machine dependent
 ENV_IDS = ['simple-v0','human-v0','safety-v0'] # env ids are registered in outermost __init__.py
 TRAIN_STEPS = 5_000_000
 DT = datetime.datetime.now().strftime('%m%d_%H%M')

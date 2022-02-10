@@ -666,7 +666,7 @@ class safetyEnv(humanEnv):
         dictRew["Action"] = smoothRew
 
 
-        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
+        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose**-1
         dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
         #only penalize velocity near the target
         if sqrErrPose < vel_penalty_radius: #see rewards.vel_penalty_radius
