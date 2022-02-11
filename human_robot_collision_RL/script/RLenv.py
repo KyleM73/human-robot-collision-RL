@@ -666,7 +666,7 @@ class safetyEnv(humanEnv):
         dictRew["Action"] = smoothRew
 
 
-        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose**-1
+        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
         dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
         #only penalize velocity near the target
         if sqrErrPose < vel_penalty_radius: #see rewards.vel_penalty_radius
@@ -703,7 +703,8 @@ class safetyEnv(humanEnv):
         return reward, done, dictLog
 
 if __name__ == "__main__": 
-    env = safetyEnv(False,reward=rewardDict)
+    env = simpleEnv(False,reward=rewardDict)
+    #env = safetyEnv(False,reward=rewardDict)
     obs = env.reset()
     act = np.array([0,-1,0]) #[m/s]
 

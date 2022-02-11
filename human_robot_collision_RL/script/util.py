@@ -94,7 +94,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
         goalPose = np.random.uniform(low=-FIELD_RANGE, high=FIELD_RANGE, size=3)
         goalPose[2] = 0 #set z coord
         goalDist = np.linalg.norm(goalPose)
-    #goalPose = TEST_POSE #FOR DEBUGGING ONLY
+    goalPose = TEST_POSE #FOR DEBUGGING ONLY
     goalModel = setupGoal(c, goalPose)
 
     robotModel = setupRobot(c, ROBOT_POSE, ROBOT_ORI)

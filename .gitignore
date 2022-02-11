@@ -19,6 +19,8 @@ venv.bak/
 *events.out.tfevents.*
 */log/*/*/*.py
 *not_used_code_wasteland.txt
+*/*save/*
+*/*save/*.py
 
 # Installer logs
 pip-log.txt

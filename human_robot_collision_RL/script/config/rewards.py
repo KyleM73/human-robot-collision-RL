@@ -28,8 +28,8 @@ rewardDict = {
     "AngularVelocity" :  -0.01,
     "Fail"            :    -10,
     "Goal"            :     50,
-    "ActionSmooth"    :    0.1,
-    "ActionNotSmooth" :   -0.1,
+    "ActionSmooth"    :      0,
+    "ActionNotSmooth" :      0,
     "Collision"       : colDict
 }
 

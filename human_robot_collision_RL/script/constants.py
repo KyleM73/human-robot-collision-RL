@@ -14,7 +14,7 @@ FIELD_RANGE = 10 #may expand (to 20?)
 EXP_NUM = 3 #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
 CPU_NUM = 36 # machine dependent
 ENV_IDS = ['simple-v0','human-v0','safety-v0'] # env ids are registered in outermost __init__.py
-TRAIN_STEPS = 5_000_000
+TRAIN_STEPS = 10_000_000
 DT = datetime.datetime.now().strftime('%m%d_%H%M')
 MIN_TARGET_DIST = 4
 POLICY_KWARGS = dict(net_arch=[128, 128, dict(vf=[8], pi=[16])]) #vf and pi are layers not shared and unique to the value function and policy, respectively
@@ -58,7 +58,7 @@ INIT_POSE_LIST = [
     ([0,0,0.15] ,[PI,PI,0])   #laying on back (PI,0,0 for stomach)
     ]
 M_HUMAN = 75
-TEST_POSE = np.array([0,-5,0])
+TEST_POSE = np.array([0,-10,0])
 
 ## Controller configuartion ##
 
