@@ -62,7 +62,7 @@ class ctlrRobot(object):
         # note: setting the velocity like this violates the simulation dynamics 
         # and will not yield accurate collisions after the initial contact
         #vZ = self._vel[2] - GRAVITY[2]*TIME_STEP
-        vZ = 0
+        
         #TODO: set max acceleration (change in velocity)
         #idea: get vel. if commanded vel has opposite sign as current vel, command zero vel
         #because we set vel instantly this is a non-issue, but is a big issue on the real robot
@@ -84,12 +84,20 @@ class ctlrRobot(object):
             else:
                 dVV.append(v)
 
-
-
         p.resetBaseVelocity(self.robot,[dVV[0],dVV[1],vZ],[0,0,dVV[2]])
         '''
+        ax = action[0] * TIME_STEP
+        ay = action[1] * TIME_STEP
+        ath = action[2] * TIME_STEP
+
+        vX = max(min(self._vel[0] + ax,1),-1)
+        vY = max(min(self._vel[1] + ay,1),-1)
+        vZ = 0
+        vTH = max(min(self._angularRate[2] + ath,1),-1)
+
+
         if not self.inCollision:
-            p.resetBaseVelocity(self.robot,[action[0],action[1],vZ],[0,0,action[2]])
+            p.resetBaseVelocity(self.robot,[vX,vY,vZ],[0,0,vTH])
 
         return
     

@@ -1,14 +1,14 @@
 from gym.envs.registration import register
 from human_robot_collision_RL.script.config.rewards import rewardDict
-from human_robot_collision_RL.script.constants import MAX_STEPS
+from human_robot_collision_RL.script.constants import MAX_STEPS, NUM_HUMANS
 
 register(
     id='simple-v0',
     entry_point='human_robot_collision_RL.script:myEnv',
     kwargs={
-        'training':True,
-        'reward':rewardDict,
-        'maxSteps':MAX_STEPS
+        'training'  :True,
+        'reward'    :rewardDict,
+        'maxSteps'  :MAX_STEPS
         },
     )
 
@@ -16,9 +16,9 @@ register(
     id='human-v0',
     entry_point='human_robot_collision_RL.script:humanEnv',
     kwargs={
-        'training':True,
-        'reward':rewardDict,
-        'maxSteps':MAX_STEPS
+        'training'  :True,
+        'reward'    :rewardDict,
+        'maxSteps'  :MAX_STEPS
         },
     )
 
@@ -26,9 +26,10 @@ register(
     id='safety-v0',
     entry_point='human_robot_collision_RL.script:safetyEnv',
     kwargs={
-        'training':True,
-        'reward':rewardDict,
-        'maxSteps':MAX_STEPS
+        'training'  :True,
+        'reward'    :rewardDict,
+        'maxSteps'  :MAX_STEPS,
+        'humans'    :NUM_HUMANS
         },
     )
 

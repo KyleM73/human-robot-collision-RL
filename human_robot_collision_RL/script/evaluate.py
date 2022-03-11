@@ -19,7 +19,7 @@ def evaluate(model_name,log_save_path=None,exp_num=EXP_NUM):
     print()
 
     envs = [myEnv,humanEnv,safetyEnv]
-    envTest = envs[exp_num-1](True,rewardDict)
+    envTest = envs[exp_num-1](True,rewardDict,MAX_STEPS,NUM_HUMANS)
     modelTest = PPO.load(path, env=envTest)
 
     obs = envTest.reset()
@@ -38,12 +38,16 @@ def evaluate(model_name,log_save_path=None,exp_num=EXP_NUM):
             break
         if i % 200 == 0:
             print("progress...    ",100*i/MAX_STEPS,"%")
+        elif i == MAX_STEPS-1:
+            print("progress...     100 %")
 
     print()
+    '''
     print("pose:   ",[FIELD_RANGE*obs[i] for i in range(3)])
     print("heading:",[2*PI*obs[2]])
     print("vel:    ",obs[3:6])
     print("target: ",[FIELD_RANGE*obs[6+i] for i in range(2)])
+    '''
 
 def evaluateLive(model_name,exp_num=EXP_NUM):
     model_path = PATH_LOG+'/Experiment_'+str(exp_num)+'/'+model_name+'_1/'
@@ -67,11 +71,13 @@ def evaluateLive(model_name,exp_num=EXP_NUM):
             print("'done' condition hit")
             break
 
+    '''
     print()
     print("pose:   ",[FIELD_RANGE*obs[i] for i in range(3)])
     print("heading:",[2*PI*obs[2]])
     print("vel:    ",obs[3:6])
     print("target: ",[FIELD_RANGE*obs[6+i] for i in range(2)])
+    '''
 
 
 def evaluateMain(experiment_num=EXP_NUM):

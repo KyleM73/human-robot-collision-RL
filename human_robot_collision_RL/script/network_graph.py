@@ -54,13 +54,13 @@ def network_graph(f,obs_len=1,fixed_obs=0,d_out=2,n=10,p=1,view_dim=0):
 
     fig, ax = plt.subplots(1,2,subplot_kw={"projection": "3d"})
     ax[0].plot_surface(X[0],X[1],Z[:,:,0], linewidth=1, antialiased=False) #facecolors=fcolors,
-    ax[0].set_xlabel('x')
-    ax[0].set_ylabel('y')
-    ax[0].set_zlabel('z')
+    ax[0].set_xlabel('x error')
+    ax[0].set_ylabel('y error')
+    ax[0].set_zlabel('Vx')
     ax[1].plot_surface(X[0],X[1],Z[:,:,1], linewidth=1, antialiased=False) #facecolors=fcolors,
-    ax[1].set_xlabel('x')
-    ax[1].set_ylabel('y')
-    ax[1].set_zlabel('z')
+    ax[1].set_xlabel('x error')
+    ax[1].set_ylabel('y error')
+    ax[1].set_zlabel('Vy')
     plt.show()
 
 

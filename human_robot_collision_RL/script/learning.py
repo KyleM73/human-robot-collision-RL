@@ -45,7 +45,7 @@ if __name__ == "__main__":
     env = SubprocVecEnv([makeEnvs(env_id) for i in range(num_cpu)],start_method='fork') #env.env_method(method_name='setRecord')
 
     ## train model
-    model = PPO("MlpPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=tb_log_path) #TODO: add custom policy args
+    model = PPO("MlpPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=tb_log_path)
     startTime = time.time()
     model.learn(total_timesteps=TRAIN_STEPS,tb_log_name=tb_log_subpath)
     endTime = time.time()

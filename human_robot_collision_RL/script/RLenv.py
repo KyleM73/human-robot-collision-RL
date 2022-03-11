@@ -27,7 +27,7 @@ from human_robot_collision_RL.script.config.rewards import *
 class myEnv(Env):
     def __init__(self, training=True, reward=rewardDict, maxSteps=MAX_STEPS):
         '''
-        Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ [8]
+        Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY [8]
         Action Space -> vX,vY,vthZ [3]
         '''
         if training:
@@ -486,7 +486,7 @@ class humanEnv(myEnv):
 
         return reward, done, dictLog
 
-class safetyEnv(humanEnv):
+class safetyEnvFull(humanEnv):
     def __init__(self, training=True, reward={}, maxSteps=2000, humans=1):
         '''
         Observation Space -> X,Y,thZ,vX,vY,vthZ,gX,gY,gthZ,hX,hY,hthZ,[bpX,bpY,bpZ]x20 joints [8+3h+3*20*h] (71 for h=1)
@@ -702,9 +702,240 @@ class safetyEnv(humanEnv):
 
         return reward, done, dictLog
 
+class safetyEnv(humanEnv):
+    def __init__(self, training=True, reward={}, maxSteps=MAX_STEPS, humans=NUM_HUMANS):
+        '''
+        EGO-CENTRIC
+        Observation Space -> vX,vY,vthZ,gX,gY,gthZ,hX,hY,hthZ,[bpX,bpY,bpZ]x20 joints [5+3h+3*20*h] (68 for h=1)
+        Action Space -> dvX,dvY,dvthZ [3] (effectively accelerations, see control.py)
+        '''
+        self.training = training
+        if training:
+            self.client = bc.BulletClient(connection_mode=p.DIRECT)
+        else:
+            self.client = bc.BulletClient(connection_mode=p.GUI)
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+
+        self.dictRewardCoeff = reward
+
+        if humans is not None:
+            self.humans = int(humans)
+        else:
+            self.humans = humans
+        #assert self.humans == 1, 'Error: incorrect number of humans provided'
+
+        obs_shape = 6# + 3*self.humans + 3*20*self.humans
+
+        self.observation_space = spaces.Box(low=-1,
+                                            high=1,
+                                            shape=(obs_shape,), 
+                                            dtype=np.float32
+                                            )
+
+        self.action_space = spaces.Box(low=-1,
+                                       high=1,
+                                       shape=(NUM_ACTIONS,),
+                                       dtype=np.float32
+                                       )
+        self.maxSteps = maxSteps
+
+        self.record = False
+        self.recorder = None
+
+        self.inCollision = False
+        self.lastAction = np.array([0,0,0])
+
+    def _setup(self):
+
+        ## Initiate simulation
+        self.client.resetSimulation()
+
+        self.client.setAdditionalSearchPath(PATH_DATA)
+
+        ## Set up simulation
+        self.client.setTimeStep(TIME_STEP)
+        self.client.setPhysicsEngineParameter(numSolverIterations=int(30))
+        self.client.setPhysicsEngineParameter(enableConeFriction=0)
+        self.client.setGravity(GRAVITY[0],GRAVITY[1],GRAVITY[2])
+
+        # creating environment
+        self.models = setupWorld(self.client,self.humans) ## use function including human
+        self.robot = self.models['robot']
+
+        self.goal = self.models['goal']
+
+        #self.human = self.models['human']
+        #self.human.reset()
+        self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
+
+        #TODO: use to get person walking
+        #self.human.fix()
+        #self.human.resetGlobalTransformation() #can add args later, using defaults
+
+        #self.nJ = p.getNumJoints(self.human.body_id)
+        #self.linkList = [i for i in range(self.nJ)]
+
+        #self.collider = Collision(
+        #    self.client._client,
+        #    robot=self.robot,
+        #    human=self.human
+        #)
+
+        self.control = ctlrRobot(self.robot)
+        
+        self.dictActParam = {"Offset": np.zeros(NUM_ACTIONS), 
+                            "Scale":  np.array([1] * NUM_ACTIONS)}
+        
+        self.target = self._getTargets()
+
+        self.cnt = 0
+
+        for _ in range(REPEAT_INIT):
+            #self.control.holdRobot()
+            self.client.stepSimulation()
+            self._getObs()
+        self._evaluate()
+
+    def step(self, action):
+
+        self._runSim(action)
+        ob = self._getObs()
+        reward, done, dictLog = self._evaluate(ob,action)
+
+        if self.record:
+            if self.recorder == None:
+                self._startRecorder()
+
+            self._writeRecorder()
+
+            if done:
+                self._closeRecorder()
+
+        return ob, reward, done, dictLog
+
+    def _getTargets(self):
+
+        XYZ, TH = self.client.getBasePositionAndOrientation(self.goal)
+
+        return XYZ,TH
+
+    def _getObs(self):
+
+        bodyPose, obsBodyOri = p.getBasePositionAndOrientation(self.robot)
+        obsVel,obsAngularRate = p.getBaseVelocity(self.robot)
+        
+        targetXYZ,targetTH = self._getTargets()
+        obsTarget = [(targetXYZ[i] - bodyPose[i])/FIELD_RANGE for i in range(3)]
+        obsTargetOriEgo = (Q2E(obsBodyOri)[2] - Q2E(targetTH)[2])/(2*PI) #angle between robot heading and target
+        
+        #humanPose,humanOri = p.getBasePositionAndOrientation(self.human.body_id)
+        #obsHumanPose = [(humanPose[i] - bodyPose[i])/FIELD_RANGE for i in range(3)]
+        #obsHumanOriEgo = (Q2E(obsBodyOri)[2] - Q2E(humanOri)[2])/(2*PI) #angle between robot heading and human
+        
+        #links = p.getLinkStates(self.human.body_id,self.linkList)
+        #obsLinks = [l_/FIELD_RANGE for l in links for l_ in list(l[0])]
+
+        obs = np.concatenate((
+            obsVel[0:2], 
+            obsAngularRate[2], 
+            obsTarget[0:2],
+            obsTargetOriEgo,
+            #obsHumanPose[0:2],
+            #obsHumanOriEgo
+            ), axis=None)
+
+        return obs
+
+    def _evaluate(self,ob=None,action=None):
+
+        done = False
+        dictLog = {}
+        dictRew = {}
+        dictState = {}
+
+        maxCost = max_cost #see rewards.max_cost
+
+        #Fdict = self._getCollision()
+
+        if ob is None:
+            ob = self._getObs()
+
+        #bodyPose = FIELD_RANGE*np.array(ob[0:2])
+        #bodyOri = 2*PI*np.array(ob[2])
+        bodyVel = np.array(ob[0:2])
+        bodyAngularVel = np.array(ob[2])
+        target = FIELD_RANGE*np.array(ob[3:5])
+        targetOri = np.array(ob[5])
+
+        sqrErrPose = np.sum((target)**2)
+        sqrErrAng = targetOri**2 
+        sqrErrVel = np.sum(bodyVel**2)
+        sqrErrAngVel = bodyAngularVel**2
+
+        dictState["Position"] = sqrErrPose
+        dictState["Angle"] = sqrErrAng
+        dictState["Velocity"] = sqrErrVel
+        dictState["AngularVelocity"] = sqrErrAngVel
+
+        #collisionReward = 0
+        #if Fdict is not None:
+        #    for F in Fdict.keys():
+        #        (rew,maxCostFlag) = getCollisionReward(Fdict,F,collisionDictTransient,collisionDictQuasiStatic,maxCost)
+        #        collisionReward += self.dictRewardCoeff["Collision"][F] * rew
+        #        if maxCostFlag : done = True
+
+        #smoothRew = 0
+        #if action is not None:
+        #    diffAction = abs(action - self.lastAction)
+        #    for i in range(action.shape[0]):
+        #        if diffAction[i] < MAX_ACTION_DIFF:
+        #            smoothRew += self.dictRewardCoeff["ActionSmooth"]*diffAction[i]
+        #        else:
+        #            smoothRew += self.dictRewardCoeff["ActionNotSmooth"]*diffAction[i]
+        #    self.lastAction = action
+        #dictRew["Action"] = smoothRew
+
+
+        dictRew["Position"] = self.dictRewardCoeff["Position"] * sqrErrPose
+        #dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
+        
+        #only penalize velocity near the target
+        #if sqrErrPose < vel_penalty_radius: #see rewards.vel_penalty_radius
+        #    dictRew["Velocity"] = self.dictRewardCoeff["Velocity"] * sqrErrVel   
+        #else:
+        #    dictRew["Velocity"] = 0
+        
+        #dictRew["AngularVelocity"] = self.dictRewardCoeff["AngularVelocity"] * sqrErrAngVel
+        #dictRew["Collision"] = collisionReward
+
+        #if p.getBasePositionAndOrientation(self.robot)[0][2] > self.initZ + MAX_HEIGHT_DEVIATION:
+        #    print("warning: height deviation detected")
+
+        if sqrErrPose < pose_radius and sqrErrVel < vel_radius: #see rewards.($VAR)
+            done = True
+            dictRew["Goal"] = self.dictRewardCoeff["Goal"]
+        elif self.cnt > self.maxSteps:
+            dictRew["Fail"] = self.dictRewardCoeff["Fail"]
+            done = True
+        else:
+            self.cnt+=1
+
+        reward = 0
+        for rew in dictRew.values():
+            reward += rew
+
+        dictRew["Sum"] = reward
+
+        if done:
+            dictLog["Done"] = 1
+        dictLog["Reward"] = dictRew
+        dictLog["State"] = dictState
+
+        return reward, done, dictLog
+
 if __name__ == "__main__": 
-    env = simpleEnv(False,reward=rewardDict)
-    #env = safetyEnv(False,reward=rewardDict)
+    #env = myEnv(False,reward=rewardDict)
+    env = safetyEnv(False,reward=rewardDict,humans=None)
     obs = env.reset()
     act = np.array([0,-1,0]) #[m/s]
 
