@@ -125,7 +125,7 @@ def setupWorld(client,humans=None,humanPose=POSE):
             humanPose = INIT_POSE_LIST[1][0] + rnScale*goalPose
             humanOri = np.array(INIT_POSE_LIST[1][1]) + PI*np.array([0,0,rn])
 
-        #humanPose = POSE + goalPose/2
+        humanPose = POSE + goalPose/2
         humanModel = Man(c._client,
             partitioned=False,
             self_collisions=False,
@@ -155,3 +155,5 @@ def copy_reward_gains(path):
     shutil.copyfile(reward_path, new_reward_path)
     shutil.copyfile(collision_params_path, new_collision_params_path)
     shutil.copyfile(constants_path, new_constants_path)
+
+

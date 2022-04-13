@@ -764,7 +764,7 @@ class safetyEnv(humanEnv):
 
         self.goal = self.models['goal']
 
-        #self.human = self.models['human']
+        self.human = self.models['human']
         #self.human.reset()
         self.initZ = p.getBasePositionAndOrientation(self.robot)[0][2]
 
@@ -772,14 +772,14 @@ class safetyEnv(humanEnv):
         #self.human.fix()
         #self.human.resetGlobalTransformation() #can add args later, using defaults
 
-        #self.nJ = p.getNumJoints(self.human.body_id)
-        #self.linkList = [i for i in range(self.nJ)]
+        self.nJ = p.getNumJoints(self.human.body_id)
+        self.linkList = [i for i in range(self.nJ)]
 
-        #self.collider = Collision(
-        #    self.client._client,
-        #    robot=self.robot,
-        #    human=self.human
-        #)
+        self.collider = Collision(
+            self.client._client,
+            robot=self.robot,
+            human=self.human
+        )
 
         self.control = ctlrRobot(self.robot)
         
@@ -935,12 +935,12 @@ class safetyEnv(humanEnv):
 
 if __name__ == "__main__": 
     #env = myEnv(False,reward=rewardDict)
-    env = safetyEnv(False,reward=rewardDict,humans=None)
+    env = safetyEnv(False,reward=rewardDict,humans=1)
     obs = env.reset()
-    act = np.array([0,-1,0]) #[m/s]
+    act = np.array([0,-0.005,0]) #[m/s]
 
     #env.setRecord(True)
-    for _ in range(MAX_STEPS):
+    for _ in range(MAX_STEPS*10):
         ob, reward, done, dictLog = env.step(act)
         time.sleep(TIME_STEP)
 

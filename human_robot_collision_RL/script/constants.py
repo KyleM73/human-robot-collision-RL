@@ -13,7 +13,7 @@ FIELD_RANGE = 10 #may expand (to 20?)
 
 EXP_NUM = 3 # no human, simple human, full human -------------------- #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
 CPU_NUM = 24 # machine dependent
-TRAIN_STEPS = 10_000_000
+TRAIN_STEPS = 10_000
 POLICY_KWARGS = dict(net_arch=[64,64, dict(vf=[], pi=[])]) #vf and pi are layers not shared and unique to the value function and policy, respectively
 MAX_ACTION_DIFF = 0.5
 
