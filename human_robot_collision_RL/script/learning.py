@@ -10,8 +10,9 @@ import gym
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMonitor, VecVideoRecorder
 from stable_baselines3.common.callbacks import EvalCallback
+#from stable_baselines3.common.monitor import Monitor
 
 from human_robot_collision_RL.script.constants import *
 from human_robot_collision_RL.script.evaluate import evaluate
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     ## define path for tensorboard logging
     tb_log_path = PATH_LOG+'/'+str(EXP_NAME)
     tb_log_subpath = '{}'.format(DT)
-    log_path_full = '{}/{}_1'.format(tb_log_path,tb_log_subpath)
+    log_path_full = '{}/{}'.format(tb_log_path,tb_log_subpath)
 
     ## set the environment params
     env_id = 'safety-v0'#ENV_IDS[EXP_NUM-1]
@@ -45,13 +46,14 @@ if __name__ == "__main__":
 
     ## evaluation env
     eval_env = gym.make(env_id)
+    eval_env = VecMonitor(venv=eval_env)
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_path_full,log_path=log_path_full)
 
     ## make parallel environments
     env = SubprocVecEnv([makeEnvs(env_id) for i in range(num_cpu)],start_method='fork') #env.env_method(method_name='setRecord')
 
     ## train model
-    model = PPO("MlpPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=tb_log_path)
+    model = PPO("MlpPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=log_path_full)
     startTime = time.time()
     model.learn(total_timesteps=TRAIN_STEPS,tb_log_name=tb_log_subpath,callback=eval_callback)
     endTime = time.time()
@@ -64,6 +66,29 @@ if __name__ == "__main__":
 
     ## save relevant files with hyperparams
     copy_reward_gains(log_path_full) #be careful if training is stopped
+
+    print()
+    print('EVALUATING MODEL...')
+    print()
+
+    envTest = safetyEnv(True,rewardDict,MAX_STEPS)
+    envTest = VecVideoRecorder(envTest,save_path,record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+
+    #load best model
+    save_path_best = '{}/{}'.format(log_path_full,"best_model")
+    best_model = PPO.load(save_path_best, env=envTest)
+
+    obs = envTest.reset()
+    
+    for i in range(MAX_STEPS):
+        action, _states = best_model.predict(obs)
+        obs, rewards, dones, info = envTest.step(action)
+        if i % 200 == 0:
+            print("progress...    ",100*i/MAX_STEPS,"%")
+        elif i == MAX_STEPS-1:
+            print("progress...     100 %")
+
+    print()
     
     
     ## evaluate the model
