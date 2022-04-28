@@ -7,6 +7,7 @@ import datetime
 import time
 
 import gym
+from gym.wrappers import Monitor as gymMonitor
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -70,14 +71,16 @@ if __name__ == "__main__":
     print()
     print('EVALUATING MODEL...')
 
-    envTest = DummyVecEnv([lambda: gym.make(env_id)])
+    #envTest = DummyVecEnv([lambda: gym.make(env_id)])
+    envTest = gym.make(env_id)
 
     print()
     print("Final Model:")
     print()
 
     
-    envTest_final = VecVideoRecorder(envTest,log_path_full+"/final_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+    #envTest_final = VecVideoRecorder(envTest,log_path_full+"/final_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+    envTest_final = gymMonitor(envTest,log_path_full+"/final_model")
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"best_model")
@@ -97,7 +100,8 @@ if __name__ == "__main__":
     print("Best Model:")
     print()
 
-    envTest_best = VecVideoRecorder(envTest,log_path_full+"/best_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+    #envTest_best = VecVideoRecorder(envTest,log_path_full+"/best_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+    envTest_best = gymMonitor(envTest,log_path_full+"/best_model")
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"best_model")
