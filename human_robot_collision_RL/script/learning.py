@@ -47,7 +47,7 @@ if __name__ == "__main__":
     ## evaluation env
     eval_env = gym.make(env_id)
     eval_env = Monitor(eval_env)
-    eval_callback = EvalCallback(eval_env, best_model_save_path=log_path_full,log_path=log_path_full,eval_freq=100000)
+    eval_callback = EvalCallback(eval_env, best_model_save_path=log_path_full,log_path=log_path_full)
 
     ## make parallel environments
     env = SubprocVecEnv([makeEnvs(env_id) for i in range(num_cpu)],start_method='fork') #env.env_method(method_name='setRecord')
