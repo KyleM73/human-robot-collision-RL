@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot name="trikey">
+  <link name="dummy">
+  </link>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0.00252107 -0.0402364 -0.0133064" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/motors_base.STL"/>
+      </geometry>
+      <material name="motors_base_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.00252107 -0.0402364 -0.0133064" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/motors_base.STL"/>
+      </geometry>
+      <material name="motors_base_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <origin xyz="-0.103138 -0.0619127 -0.0492546" rpy="0 0 0"/>
+      <mass value="18.8276" />
+      <inertia ixx="0.303414" ixy="1.35923e-09"  ixz="-1.15948e-09" iyy="0.303414" iyz="-3.03776e-09" izz="0.562153" />
+    </inertial>
+  </link>
+
+  <!--  Wheels  -->
+  <link name="wheel0">
+    <visual>
+      <origin xyz="0.0157175 -0.000676884 -0.0110091" rpy="-1.5708 -3.56009e-33 -5.76344e-17" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+      </geometry>
+      <material name="wheel_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0157175 -0.000676884 -0.0110091" rpy="-1.5708 -3.56009e-33 -5.76344e-17" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+        </geometry>
+      <material name="wheel_material">
+      <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <origin xyz="-3.2877e-05 -5.91764e-05 -0.0194228" rpy="0 0 0"/>
+      <mass value="2.36069" />
+      <inertia ixx="0.00466517" ixy="9.17346e-07"  ixz="2.34275e-06" iyy="0.00466772" iyz="-4.20658e-06" izz="0.00786801" />
+    </inertial>
+  </link>
+
+  <link name="wheel1">
+    <visual>
+      <origin xyz="0.0157175 -0.000676884 -0.0110091" rpy="-1.5708 4.8608e-17 1.36846e-47" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+      </geometry>
+      <material name="wheel_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0157175 -0.000676884 -0.0110091" rpy="-1.5708 4.8608e-17 1.36846e-47" />
+      <geometry>
+      <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+      </geometry>
+      <material name="wheel_material">
+      <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <origin xyz="-3.2877e-05 -5.91764e-05 -0.0194228" rpy="0 0 0"/>
+      <mass value="2.36069" />
+      <inertia ixx="0.00466517" ixy="9.17346e-07"  ixz="2.34275e-06" iyy="0.00466772" iyz="-4.20658e-06" izz="0.00786801" />
+    </inertial>
+  </link>
+
+  <link name="wheel2">
+    <visual>
+      <origin xyz="0.0157175 -0.000676884 -0.00283407" rpy="-1.5708 -2.51863e-17 3.13582e-17" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+      </geometry>
+      <material name="wheel_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0157175 -0.000676884 -0.00283407" rpy="-1.5708 -2.51863e-17 3.13582e-17" />
+      <geometry>
+        <mesh filename="package://trikey_description/meshes/wheel.STL"/>
+      </geometry>
+      <material name="wheel_material">
+        <color rgba="0.792157 0.819608 0.933333 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <origin xyz="-3.2877e-05 -5.91764e-05 -0.0112478" rpy="0 0 0"/>
+      <mass value="2.36069" />
+      <inertia ixx="0.00466517" ixy="9.17346e-07"  ixz="2.34275e-06" iyy="0.00466772" iyz="-4.20658e-06" izz="0.00786801" />
+    </inertial>
+  </link>
+
+  <!-- Joints -->
+  <joint name="dummy_joint" type="fixed">
+    <parent link="dummy"/>
+    <child link="base_link"/>
+  </joint>
+
+  <joint name="wheel0_joint" type="continuous">
+    <origin xyz="-0.103157 -0.317313 -0.144393" rpy="1.5708 0.599769 -5.54919e-17" />
+    <parent link="base_link" />
+    <child link="wheel0" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1" velocity="20" />
+    <joint_properties friction="0.0"/>
+  </joint>
+
+  <joint name="wheel1_joint" type="continuous">
+    <origin xyz="0.110261 0.0612702 -0.144393" rpy="1.5708 0.632117 2.0944" />
+    <parent link="base_link" />
+    <child link="wheel1" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1" velocity="20" />
+    <joint_properties friction="0.0"/>
+  </joint>
+
+  <joint name="wheel2_joint" type="continuous">
+    <origin xyz="-0.323445 0.0653045 -0.144393" rpy="-1.5708 -1.38778e-17 1.0472" />
+    <parent link="base_link" />
+    <child link="wheel2" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1" velocity="20" />
+    <joint_properties friction="0.0"/>
+  </joint>
+
+  <!-- Transmissions: needed for ROS control -->
+  <transmission name="wheel0_simple_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wheel0_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel0_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </actuator>
+  </transmission>
+
+  <transmission name="wheel1_simple_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wheel1_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel1_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </actuator>
+  </transmission>
+
+  <transmission name="wheel2_simple_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wheel2_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel2_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </actuator>
+  </transmission>
+
+  <!-- Sensors -->
+
+  <gazebo reference="base_link">
+    <sensor type="ray" name="rplidar">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+	    <min_angle>-1.57079632679</min_angle>
+            <max_angle>1.57079632679 </max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise parameters based on published spec for Hokuyo laser
+               achieving "+-30mm" accuracy at range < 10m.  A mean of 0.0m and
+               stddev of 0.01m will put 99.7% of samples within 0.03m of the true
+               reading. -->
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_lidar_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>base_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/trikey</robotNamespace>
+    </plugin>
+  </gazebo>
+
+</robot>

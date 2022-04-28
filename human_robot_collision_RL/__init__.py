@@ -29,7 +29,7 @@ register(
         'training'  :True,
         'reward'    :rewardDict,
         'maxSteps'  :MAX_STEPS,
-        'humans'    :NUM_HUMANS
+        #'humans'    :NUM_HUMANS
         },
     )
 

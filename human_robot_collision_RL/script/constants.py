@@ -12,8 +12,9 @@ FIELD_RANGE = 10 #may expand (to 20?)
 ## Simulation params ##
 
 EXP_NUM = 3 # no human, simple human, full human -------------------- #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
+EXP_NAME = "Empty_Hall"
 CPU_NUM = 24 # machine dependent
-TRAIN_STEPS = 10_000
+TRAIN_STEPS = 50_000_000
 POLICY_KWARGS = dict(net_arch=[64,64, dict(vf=[], pi=[])]) #vf and pi are layers not shared and unique to the value function and policy, respectively
 MAX_ACTION_DIFF = 0.5
 
@@ -52,15 +53,20 @@ ROBOT_MODEL = "/trikey2.urdf"
 ## Human configuration
 
 NUM_HUMANS = None
-POSE = [0,0,1.112] #trial and error, works for man, child not tested
-ORI = [PI/2,0,PI]
+HUMAN_POSE = [0,5,1.112] #trial and error, works for man, child not tested
+HUMAN_ORI = [PI/2,0,0]
 #(POSE,ORI) tuple for standing and laying on back config
-INIT_POSE_LIST = [
-    ([0,0,1.112],[PI/2,0,0]), #standing
-    ([0,0,0.15] ,[PI,PI,0])   #laying on back (PI,0,0 for stomach)
-    ]
+#INIT_POSE_LIST = [
+#    ([0,0,1.112],[PI/2,0,0]), #standing
+#    ([0,0,0.15] ,[PI,PI,0])   #laying on back (PI,0,0 for stomach)
+#    ]
 M_HUMAN = 75
 TEST_POSE = np.array([0,-10,0])
+
+## Goal configuration
+
+GOAL_POSES = [np.array([0,2,0.5]),np.array([0,4,0.5]),np.array([0,6,0.5]),np.array([0,8,0.5]),np.array([0,10,0.5])]
+GOAL_THRESH = 0.1
 
 ## Controller configuartion ##
 

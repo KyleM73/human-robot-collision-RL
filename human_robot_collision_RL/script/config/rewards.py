@@ -22,12 +22,12 @@ colDict = {
 }
 
 rewardDict = {
-    "Position"        :     -2,#-0.02
+    "Position"        :     -1,#-0.02
     "Angle"           :  -0.01,
     "Velocity"        : -0.001,
     "AngularVelocity" :  -0.01,
     "Fail"            :    -10,
-    "Goal"            :     50,
+    "Goal"            :     10,
     "ActionSmooth"    :      0,
     "ActionNotSmooth" :      0,
     "Collision"       : colDict
@@ -35,7 +35,7 @@ rewardDict = {
 
 max_cost = 300 #good value??
 vel_penalty_radius = 2
-pose_radius = 1
+pose_radius = 0.5
 vel_radius = 0.5
 
 def getCollisionReward(F,partName,transDict,quasiStaticDict,maxCost):

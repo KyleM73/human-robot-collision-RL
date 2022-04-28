@@ -2,6 +2,7 @@ import os
 
 import pybullet as p
 from pybullet import getEulerFromQuaternion as Q2E
+from pybullet import getQuaternionFromEuler as E2Q
 import pybullet_data
 
 import numpy as np
@@ -12,7 +13,18 @@ from human_robot_collision_RL.data.man import Man
 
 from human_robot_collision_RL.script.constants import *
 
-def setupGoal(client, pose):
+def setupGoal(client,pose=[0,10,0.5]):
+    c = client
+
+    sphere = p.createVisualShape(shapeType=p.GEOM_SPHERE, rgbaColor=[1,0,0,1], radius=0.25 )
+    idCollisionShape = None
+    goal = p.createMultiBody(
+        baseVisualShapeIndex=sphere, 
+        basePosition=pose)
+    return goal
+
+
+def setupGoalDuck(client, pose):
     c = client
     p.setAdditionalSearchPath(pybullet_data.getDataPath())  
 
@@ -29,6 +41,8 @@ def setupGoal(client, pose):
 
     ##TODO: debug, doesn't always face the right direction, duck should point towards robot's initial starting loc
     #pose = [0,-1,0]
+    #FIX THIS!!!!
+    #way point behavior? floating red spheres
     goalPosition = [pose[0], pose[1], 0.025]
     goalPoseScaled = pose/np.linalg.norm(goalPosition)
     ref = np.array([1,0,0])
@@ -80,8 +94,43 @@ def setupRobot(client, pose=ROBOT_POSE, ori=ROBOT_ORI):
 
     return robotModel
 
+def setupGround(client):
+    c = client
 
-def setupWorld(client,humans=None,humanPose=POSE):
+    shapePlane = p.createCollisionShape(shapeType = p.GEOM_PLANE)
+    terrainModel  = p.createMultiBody(0, shapePlane)
+    p.changeDynamics(terrainModel, -1, lateralFriction=1.0) 
+
+    return terrainModel
+
+def setupWalls(client,oriZ=0):
+    c = client
+
+    walls = p.loadURDF("walls.urdf",basePosition=rotZ(oriZ)@np.array([0,-0.5,0.5]),baseOrientation=E2Q([0,0,oriZ]),useFixedBase=1)
+    p.changeDynamics(walls, -1, lateralFriction=1.0)
+    return walls
+
+def setupHuman(client,pose=[0,4,1.112],oriZ=0):
+    c = client 
+
+    human = Man(client._client,
+            partitioned=False,
+            self_collisions=False,
+            pose=pose,
+            ori=[PI/2,0,oriZ],
+            fixed=1,
+            timestep=TIME_STEP,
+            scaling=1)
+    return human
+
+def rotZ(th):
+    return np.array([
+            [np.cos(th), -np.sin(th), 0],
+            [np.sin(th),  np.cos(th), 0],
+            [0         ,  0         , 1]
+            ])
+
+def setupWorld(client,humans=None,humanPose=HUMAN_POSE):
     c = client
 
     shapePlane = p.createCollisionShape(shapeType = p.GEOM_PLANE)

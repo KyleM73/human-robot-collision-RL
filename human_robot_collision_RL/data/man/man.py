@@ -11,8 +11,8 @@ class Man(Human):
                  pybtPhysicsClient,
                  partitioned=False,
                  self_collisions=False,
-                 pose=POSE,
-                 ori=ORI,
+                 pose=HUMAN_POSE,
+                 ori=HUMAN_ORI,
                  fixed=0,
                  timestep=0.01,
                  scaling=1.0):
