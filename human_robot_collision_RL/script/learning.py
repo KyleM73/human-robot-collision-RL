@@ -12,7 +12,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMonitor, VecVideoRecorder
 from stable_baselines3.common.callbacks import EvalCallback
-#from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.monitor import Monitor
 
 from human_robot_collision_RL.script.constants import *
 from human_robot_collision_RL.script.evaluate import evaluate
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     ## evaluation env
     eval_env = gym.make(env_id)
-    eval_env = VecMonitor(venv=eval_env)
+    eval_env = Monitor(venv=eval_env)
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_path_full,log_path=log_path_full)
 
     ## make parallel environments
