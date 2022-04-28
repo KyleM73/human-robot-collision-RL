@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     ## evaluation env
     eval_env = gym.make(env_id)
-    eval_env = Monitor(venv=eval_env)
+    eval_env = Monitor(eval_env)
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_path_full,log_path=log_path_full)
 
     ## make parallel environments
