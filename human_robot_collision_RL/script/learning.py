@@ -69,25 +69,52 @@ if __name__ == "__main__":
 
     print()
     print('EVALUATING MODEL...')
+
+    envTest = safetyEnv(False,rewardDict,MAX_STEPS)
+
+    print()
+    print("Final Model:")
     print()
 
-    envTest = safetyEnv(True,rewardDict,MAX_STEPS)
-    envTest = VecVideoRecorder(envTest,save_path,record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+    
+    envTest_final = VecVideoRecorder(envTest,log_path_full+"/final_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"best_model")
-    best_model = PPO.load(save_path_best, env=envTest)
+    final_model = PPO.load(save_path, env=envTest_final)
 
-    obs = envTest.reset()
+    obs = envTest_final.reset()
     
     for i in range(MAX_STEPS):
-        action, _states = best_model.predict(obs)
-        obs, rewards, dones, info = envTest.step(action)
+        action, _states = final_model.predict(obs)
+        obs, rewards, dones, info = envTest_final.step(action)
         if i % 200 == 0:
             print("progress...    ",100*i/MAX_STEPS,"%")
         elif i == MAX_STEPS-1:
             print("progress...     100 %")
 
+    print()
+    print("Best Model:")
+    print()
+
+    envTest_best = VecVideoRecorder(envTest,log_path_full+"/best_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
+
+    #load best model
+    save_path_best = '{}/{}'.format(log_path_full,"best_model")
+    best_model = PPO.load(save_path_best, env=envTest_best)
+
+    obs = envTest_best.reset()
+    
+    for i in range(MAX_STEPS):
+        action, _states = best_model.predict(obs)
+        obs, rewards, dones, info = envTest_best.step(action)
+        if i % 200 == 0:
+            print("progress...    ",100*i/MAX_STEPS,"%")
+        elif i == MAX_STEPS-1:
+            print("progress...     100 %")
+
+    print()
+    print("Done.")
     print()
     
     
