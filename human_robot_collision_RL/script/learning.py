@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print("Model train time: "+str(datetime.timedelta(seconds=endTime-startTime)))
 
     ## save the model
-    save_path = '{}/{}'.format(log_path_full,DT)
+    save_path = '{}/{}'.format(log_path_full,"final_model")
     model.save(save_path)
     del model  # delete trained model to demonstrate loading
 
@@ -80,10 +80,10 @@ if __name__ == "__main__":
 
     
     #envTest_final = VecVideoRecorder(envTest,log_path_full+"/final_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
-    envTest_final = gymMonitor(envTest,log_path_full+"/final_model")
+    envTest_final = gymMonitor(envTest,log_path_full+"/final_model_video")
 
     #load best model
-    save_path_best = '{}/{}'.format(log_path_full,"best_model")
+    save_path_best = '{}/{}'.format(log_path_full,"final_model")
     final_model = PPO.load(save_path, env=envTest_final)
 
     obs = envTest_final.reset()
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print()
 
     #envTest_best = VecVideoRecorder(envTest,log_path_full+"/best_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
-    envTest_best = gymMonitor(envTest,log_path_full+"/best_model")
+    envTest_best = gymMonitor(envTest,log_path_full+"/best_model_video")
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"best_model")
