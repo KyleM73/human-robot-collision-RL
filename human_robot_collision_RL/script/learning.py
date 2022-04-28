@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print()
     print('EVALUATING MODEL...')
 
-    envTest = safetyEnv(False,rewardDict,MAX_STEPS)
+    envTest = DummyVecEnv([lambda: gym.make(env_id)])
 
     print()
     print("Final Model:")
