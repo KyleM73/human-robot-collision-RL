@@ -83,8 +83,8 @@ def evaluateOLD(model_name,log_save_path=None,exp_num=EXP_NUM):
     '''
 
 def evaluateLive(model_name,exp_name=EXP_NAME):
-    model_path = PATH_LOG+'/'+str(exp_name)+'/'+model_name+'_1/'
-    path = model_path+model_name
+    model_path = PATH_LOG+'/'+str(exp_name)+'/'+model_name
+    path = model_path+'/best_model'
 
     print()
     print('EVALUATING MODEL...')
@@ -133,7 +133,7 @@ def evaluateMain(experiment_num=EXP_NUM):
 
 if __name__=="__main__":
     #evaluateMain(EXP_NUM)
-    evaluateLive('0428_0007',exp_name=EXP_NAME)
+    evaluateLive('/0502_1639',exp_name=EXP_NAME)
 
 
     

@@ -17,7 +17,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from human_robot_collision_RL.script.constants import *
 from human_robot_collision_RL.script.evaluate import evaluate
-from human_robot_collision_RL.script.RLenv import myEnv, humanEnv, safetyEnv
+from human_robot_collision_RL.script.env import safetyEnv
 from human_robot_collision_RL.script.util import *
 
 from human_robot_collision_RL.script.config.rewards import rewardDict
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     env = SubprocVecEnv([makeEnvs(env_id) for i in range(num_cpu)],start_method='fork') #env.env_method(method_name='setRecord')
 
     ## train model
-    model = PPO("MlpPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=log_path_full)
+    model = PPO("MultiInputPolicy", env, policy_kwargs=POLICY_KWARGS,verbose=1,tensorboard_log=log_path_full,use_sde=True)
     startTime = time.time()
     model.learn(total_timesteps=TRAIN_STEPS,tb_log_name=tb_log_subpath,callback=eval_callback)
     endTime = time.time()
@@ -72,7 +72,8 @@ if __name__ == "__main__":
     print('EVALUATING MODEL...')
 
     #envTest = DummyVecEnv([lambda: gym.make(env_id)])
-    envTest = gym.make(env_id)
+    #envTest = gym.make(env_id)
+    envTest = safetyEnv(True,rewardDict)
 
     print()
     print("Final Model:")
@@ -80,17 +81,21 @@ if __name__ == "__main__":
 
     
     #envTest_final = VecVideoRecorder(envTest,log_path_full+"/final_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
-    envTest_final = gymMonitor(envTest,log_path_full+"/final_model_video")
+    #envTest_final = gymMonitor(envTest,log_path_full+"/final_model_video")
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"final_model")
-    final_model = PPO.load(save_path, env=envTest_final)
+    final_model = PPO.load(save_path, env=envTest)
 
-    obs = envTest_final.reset()
+    obs = envTest.reset()
+    envTest.setRecord(True,log_path_full,False)
     
     for i in range(MAX_STEPS):
         action, _states = final_model.predict(obs)
-        obs, rewards, dones, info = envTest_final.step(action)
+        obs, rewards, dones, info = envTest.step(action)
+        if dones:
+            print("Simulation Complete.")
+            break
         if i % 200 == 0:
             print("progress...    ",100*i/MAX_STEPS,"%")
         elif i == MAX_STEPS-1:
@@ -101,17 +106,22 @@ if __name__ == "__main__":
     print()
 
     #envTest_best = VecVideoRecorder(envTest,log_path_full+"/best_model",record_video_trigger=lambda x:x==0,video_length=MAX_STEPS)
-    envTest_best = gymMonitor(envTest,log_path_full+"/best_model_video")
+    #envTest_best = gymMonitor(envTest,log_path_full+"/best_model_video")
 
     #load best model
     save_path_best = '{}/{}'.format(log_path_full,"best_model")
-    best_model = PPO.load(save_path_best, env=envTest_best)
+    best_model = PPO.load(save_path_best, env=envTest)
 
-    obs = envTest_best.reset()
+    obs = envTest.reset()
+    envTest.setRecord(True,log_path_full,True)
     
     for i in range(MAX_STEPS):
         action, _states = best_model.predict(obs)
-        obs, rewards, dones, info = envTest_best.step(action)
+        obs, rewards, dones, info = envTest.step(action)
+        envTest.render()
+        if dones:
+            print("Simulation Complete.")
+            break
         if i % 200 == 0:
             print("progress...    ",100*i/MAX_STEPS,"%")
         elif i == MAX_STEPS-1:

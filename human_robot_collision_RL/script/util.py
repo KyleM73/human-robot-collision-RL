@@ -16,10 +16,11 @@ from human_robot_collision_RL.script.constants import *
 def setupGoal(client,pose=[0,10,0.5]):
     c = client
 
-    sphere = p.createVisualShape(shapeType=p.GEOM_SPHERE, rgbaColor=[1,0,0,1], radius=0.25 )
+    #sphere = p.createVisualShape(shapeType=p.GEOM_SPHERE, rgbaColor=[0,0,0,0], radius=0.25 )
     idCollisionShape = None
+    sphere = None
     goal = p.createMultiBody(
-        baseVisualShapeIndex=sphere, 
+        #baseVisualShapeIndex=sphere, 
         basePosition=pose)
     return goal
 
@@ -186,6 +187,28 @@ def setupWorld(client,humans=None,humanPose=HUMAN_POSE):
         modelsDict['human'] = humanModel
 
     return modelsDict
+
+def rgba2rgb( rgba, background=(255,255,255) ):
+    #https://stackoverflow.com/a/58748986
+    row, col, ch = rgba.shape
+
+    if ch == 3:
+        return rgba
+
+    assert ch == 4, 'RGBA image has 4 channels.'
+
+    rgb = np.zeros( (row, col, 3), dtype='float32' )
+    r, g, b, a = rgba[:,:,0], rgba[:,:,1], rgba[:,:,2], rgba[:,:,3]
+
+    a = np.asarray( a, dtype='float32' ) / 255.0
+
+    R, G, B = background
+
+    rgb[:,:,0] = r * a + (1.0 - a) * R
+    rgb[:,:,1] = g * a + (1.0 - a) * G
+    rgb[:,:,2] = b * a + (1.0 - a) * B
+
+    return np.asarray( rgb, dtype='uint8' )
 
 def copy_reward_gains(path):
     reward_path = r'{}/{}'.format(PATH_CONFIG,'rewards.py')

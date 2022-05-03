@@ -30,7 +30,7 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="0.1 10.0 2.0"/>
+        <box size="0.1 30.0 2.0"/>
       </geometry>
       <material name="concrete">
         <color rgba="0.5803921569 0.5803921569 0.5803921569 1"/>
@@ -39,7 +39,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.1 10.0 2.0"/>
+        <box size="0.1 30.0 2.0"/>
       </geometry>
     </collision>
   </link>
@@ -47,7 +47,7 @@
   <joint name="back_to_right_wall" type="fixed">
     <parent link="back_wall"/>
     <child link="right_wall"/>
-    <origin xyz="0.95 4.95 0.0"/>
+    <origin xyz="0.95 14.95 0.0"/>
   </joint>
 
     <link name="left_wall">
@@ -58,7 +58,7 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="0.1 10.0 2.0"/>
+        <box size="0.1 30.0 2.0"/>
       </geometry>
       <material name="concrete">
         <color rgba="0.5803921569 0.5803921569 0.5803921569 1"/>
@@ -67,7 +67,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.1 10.0 2.0"/>
+        <box size="0.1 30.0 2.0"/>
       </geometry>
     </collision>
   </link>
@@ -75,7 +75,7 @@
   <joint name="back_to_left_wall" type="fixed">
     <parent link="back_wall"/>
     <child link="left_wall"/>
-    <origin xyz="-0.95 4.95 0.0"/>
+    <origin xyz="-0.95 14.95 0.0"/>
   </joint>
 
 </robot>

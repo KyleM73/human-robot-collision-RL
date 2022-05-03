@@ -42,11 +42,22 @@ class safetyEnv(Env):
 
         obs_shape = 6 + int(self.include_human)*3
 
-        self.observation_space = spaces.Box(low=-1,
+        self.observation_space_vector = spaces.Box(low=-1,
                                             high=1,
                                             shape=(obs_shape,), 
                                             dtype=np.float32
                                             )
+        self.observation_space_img = spaces.Box(low=0,
+                                                high=1,
+                                                shape=(1,CAM_WIDTH,CAM_HEIGHT),
+                                                dtype=np.uint8)
+
+        self.observation_space = spaces.Dict(
+            spaces={
+                "vec": self.observation_space_vector,
+                "img": self.observation_space_img
+                    }
+                )
 
         self.action_space = spaces.Box(low=-1,
                                        high=1,
@@ -57,6 +68,12 @@ class safetyEnv(Env):
 
         self.record = False
         self.recorder = None
+
+        self.projMatrix = p.computeProjectionMatrixFOV(
+            fov=CAM_FOV,
+            aspect=float(CAM_WIDTH) / CAM_HEIGHT,
+            nearVal=CAM_NEARVAL,
+            farVal=CAM_FARVAL)
 
         #self.lastAction = np.array([0,0,0])
 
@@ -84,6 +101,9 @@ class safetyEnv(Env):
         self.client.setGravity(GRAVITY[0],GRAVITY[1],GRAVITY[2])
 
         # setup environment
+        self.frames = 0
+        self.min_px = 0
+        self.max_px = 0
         self.next_goal = False
         self.inCollision = False
         self.waypoints = GOAL_POSES
@@ -95,7 +115,7 @@ class safetyEnv(Env):
         ##      self.goal = setupGoal(self.waypoints[n+1])
         self.human_pose = HUMAN_POSE
         self.human_ori = HUMAN_ORI
-        self.randAng = 2*PI*np.random.rand()
+        self.randAng = 0#2*PI*np.random.rand()
         self.rot = np.array([
             [np.cos(self.randAng), -np.sin(self.randAng), 0],
             [np.sin(self.randAng),  np.cos(self.randAng), 0],
@@ -134,7 +154,7 @@ class safetyEnv(Env):
 
         for _ in range(REPEAT_INIT):
             self.client.stepSimulation()
-            self._getObs()
+        self._getObs()
         self._evaluate()
 
     def step(self, action):
@@ -152,7 +172,8 @@ class safetyEnv(Env):
             # find data
 
         self._runSim(action)
-        ob = self._getObs()
+        img = self.render()
+        ob = self._getObs(img)
         robot_pose = np.linalg.inv(self.rot) @ p.getBasePositionAndOrientation(self.robot)[0]
         goal_pose = np.linalg.inv(self.rot) @ p.getBasePositionAndOrientation(self.goals[self.waypt])[0]
         if robot_pose[1] >= goal_pose[1]:
@@ -164,13 +185,13 @@ class safetyEnv(Env):
             if self.waypt != len(self.goals):
                 self.goal = self.goals[self.waypt]
 
-        reward, done, dictLog = self._evaluate(ob,action)
+        reward, done, dictLog = self._evaluate(ob["vec"],action)
 
         if self.record:
             if self.recorder == None:
                 self._startRecorder()
 
-            self._writeRecorder()
+            self._writeRecorder(img)
 
             if done:
                 self._closeRecorder()
@@ -203,20 +224,15 @@ class safetyEnv(Env):
 
         ax = action[0] 
         ay = action[1]
-        az = -9.8
-        ath = action[2]
+        az = 0#-9.8
+        ath = 0#action[2]
 
-        vX = max(min(self.obsVel[0] + ax*TIME_STEP,1),-1)
-        vY = max(min(self.obsVel[1] + ay*TIME_STEP,1),-1)
-        if self.bodyPose[2] > ROBOT_POSE[2]:
-            vZ = self.obsVel[2] + az*TIME_STEP
-        else: 
-            vZ = 0
+        vX = self.obsVel[0] + ax*TIME_STEP
+        vY = self.obsVel[1] + ay*TIME_STEP
 
-        vTH = max(min(self.obsAngularRate[2] + ath*TIME_STEP,1),-1)
-
-        p.applyExternalForce(self.robot,-1,[M_ROBOT*ax,M_ROBOT*ay,0],[0,0,0],p.WORLD_FRAME)
-        #p.resetBaseVelocity(self.robot,[vX,vY,vZ],[0,0,vTH])
+        if (vX**2 + vY**2)**0.5 <= 1:
+            p.applyExternalForce(self.robot,-1,[M_ROBOT*ax,M_ROBOT*ay,M_ROBOT*az],[0,0,0],p.WORLD_FRAME)
+        #p.resetBaseVelocity(self.robot,[vX,vY,vZ],[0,0,0])
 
     def _getTargets(self):
 
@@ -224,7 +240,7 @@ class safetyEnv(Env):
 
         return XYZ,TH
 
-    def _getObs(self):
+    def _getObs(self,img=None):
 
         self.bodyPose, self.obsBodyOri = p.getBasePositionAndOrientation(self.robot)
         self.obsVel,self.obsAngularRate = p.getBaseVelocity(self.robot)
@@ -249,7 +265,11 @@ class safetyEnv(Env):
             #obsHumanOriEgo
             ), axis=None)
 
-        return obs
+        if img is None:
+            img = self.render()
+        self.img = (img[:,:,0]/255.).reshape((1,CAM_HEIGHT,CAM_WIDTH))
+
+        return {"vec" : obs, "img" : self.img}
 
     def _evaluate(self,ob=None,action=None):
 
@@ -263,7 +283,9 @@ class safetyEnv(Env):
         #Fdict = self._getCollision()
 
         if ob is None:
-            ob = self._getObs()
+            obDict = self._getObs()
+            ob = obDict["vec"]
+            obimg = obDict["img"]
 
         #bodyPose = FIELD_RANGE*np.array(ob[0:2])
         #bodyOri = 2*PI*np.array(ob[2])
@@ -305,7 +327,7 @@ class safetyEnv(Env):
         #dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
 
         if self.collisions:
-            dictRew["Collisions"] = -1
+            dictRew["Collisions"] = -5
 
         
         #only penalize velocity near the target
@@ -345,17 +367,111 @@ class safetyEnv(Env):
 
         return reward, done, dictLog
 
+
+    def setRecord(self,v=True,log_path=None,best=False):
+        self.record = v
+        self.best = best
+
+        if self.record:
+            self._cameraDist = CAM_DIST
+            self._cameraYaw = CAM_YAW
+            self._cameraPitch = CAM_PITCH
+            self._renderWidth = CAM_WIDTH
+            self._renderHeight = CAM_HEIGHT
+            self._videoFormat = cv2.VideoWriter_fourcc(*'mp4v')
+            if log_path is not None:
+                self._videoSavePath = log_path #do not end in "/", see _startRecord()
+            else:
+                print("error: no video save path")
+            self.recorder = None
+
+    def _writeRecorder(self,img=None):
+    
+        if img is None:
+            img = self.render()
+        self.recorder.write(img)
+
+    def _startRecorder(self,name=DT):
+        if self.best:
+            name = name + "_best"
+
+        path = "{}/{}.mp4".format(self._videoSavePath, name)
+        self.recorder = cv2.VideoWriter(path, self._videoFormat, CAM_FPS, (self._renderWidth, self._renderHeight))
+
+    def _closeRecorder(self):
+
+        self.recorder.release()
+        self.recorder = None
+
+    def render(self,*args):
+        
+        #if not self.record:
+        #    return
+        
+        try:
+            bodyPose, obsBodyOri = p.getBasePositionAndOrientation(self.robot)
+        except:
+            bodyPose = np.zeros(3)
+            obsBodyOri = [0,0,0,1]
+
+        targetPose = self.rot @ np.array([0,100,0.5])
+
+        viewMatrix = p.computeViewMatrix(
+            cameraEyePosition=[bodyPose[0], bodyPose[1], bodyPose[2]],
+            cameraTargetPosition=targetPose,
+            cameraUpVector=[0,0,1])
+        start = time.time()
+        (_, _, _, dpth, _) = p.getCameraImage(
+            width=CAM_WIDTH,
+            height=CAM_HEIGHT,
+            renderer=p.ER_TINY_RENDERER,#ER_BULLET_HARDWARE_OPENGL,
+            viewMatrix=viewMatrix,
+            projectionMatrix=self.projMatrix,
+            shadow=0)
+        stop = time.time()
+        fps = 1./(stop - start)
+        print(fps)
+            
+        #import matplotlib.pyplot as plt
+        depth_buffer = np.asarray(dpth)#np.reshape(dpth, [w, h])
+        #depth = CAM_FARVAL * CAM_NEARVAL / (CAM_FARVAL - (CAM_FARVAL - CAM_NEARVAL) * depth_buffer)
+        self.frames += 1
+        self.min_px += np.min(depth_buffer)
+        self.max_px += np.max(depth_buffer)
+        depth = (self.frames*depth_buffer - self.min_px) / (self.max_px - self.min_px) #running avg min/max normalization
+        depth = 255*depth
+        depth = np.where(depth<0,0,depth)
+        depth = np.where(depth>255,255,depth)
+        
+
+        #plt.subplot(1, 1, 1)
+        #plt.imshow(depth, cmap='gray', vmin=0, vmax=1)
+        #plt.title('Tiny Renderer')
+
+        #plt.show()
+        #return rgba2rgb(rgbArray)
+        #dpthArray = np.asarray(dpth, dtype='uint8')
+        img = np.zeros((CAM_HEIGHT,CAM_WIDTH,3))
+        img[:,:,0] = depth
+        img[:,:,1] = depth
+        img[:,:,2] = depth
+        return img.astype('uint8')
+        #cv2.imshow("img",img)
+        #assert 1 == 0
+
+        #return 255*cv2.cvtColor(np.asarray(dpth, dtype='uint8'),cv2.COLOR_GRAY2RGB)
+
 if __name__ == "__main__": 
     #env = myEnv(False,reward=rewardDict)
-    env = safetyEnv(False,reward=rewardDict)#,humans=1)
+    env = safetyEnv(True,reward=rewardDict)#,humans=1)
     obs = env.reset()
-    act = np.array([-np.sin(env.randAng),np.cos(env.randAng),0]) #[m/s]
-    #act = np.array([1,0,0])
-    #env.setRecord(True)
-    for _ in range(MAX_STEPS*10):
+    #act = np.array([-np.sin(env.randAng),np.cos(env.randAng),0]) #[m/s]
+    act = np.array([0,1,0])
+    #env.setRecord(True,PATH_TMP)
+    for _ in range(MAX_STEPS*100):
         ob, reward, done, dictLog = env.step(act)
-        #print(reward)
-        time.sleep(TIME_STEP)
+        #env.render()
+        #time.sleep(TIME_STEP)
         if done:
             break
 

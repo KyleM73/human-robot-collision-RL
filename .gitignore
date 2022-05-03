@@ -18,9 +18,13 @@ venv.bak/
 *.zip
 *events.out.tfevents.*
 */log/*/*/*.py
+*/Empty_Hall/*
+*/Empty_Hall_With_Vision/*
 *not_used_code_wasteland.txt
 */*save/*
 */*save/*.py
+*/tmp/*
+*/log/*
 
 # Installer logs
 pip-log.txt
