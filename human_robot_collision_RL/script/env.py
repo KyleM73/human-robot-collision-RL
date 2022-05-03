@@ -420,7 +420,7 @@ class safetyEnv(Env):
             cameraEyePosition=[bodyPose[0], bodyPose[1], bodyPose[2]],
             cameraTargetPosition=targetPose,
             cameraUpVector=[0,0,1])
-        start = time.time()
+        #start = time.time()
         (_, _, _, dpth, _) = p.getCameraImage(
             width=CAM_WIDTH,
             height=CAM_HEIGHT,
@@ -428,9 +428,9 @@ class safetyEnv(Env):
             viewMatrix=viewMatrix,
             projectionMatrix=self.projMatrix,
             shadow=0)
-        stop = time.time()
-        fps = 1./(stop - start)
-        print(fps)
+        #stop = time.time()
+        #fps = 1./(stop - start)
+        #print(fps)
             
         #import matplotlib.pyplot as plt
         depth_buffer = np.asarray(dpth)#np.reshape(dpth, [w, h])

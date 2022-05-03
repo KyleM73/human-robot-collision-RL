@@ -26,15 +26,15 @@ class Network(BaseFeaturesExtractor):
                 #62,017 - 16 = 62,001
                 #65,552 - 16 = 65,536
                 extractors[key] = nn.Sequential(
-                    nn.Conv2d(n_input_channels,3,8,padding="same"),
-                    #nn.ReLU(),
-                    #nn.MaxPool2d(4),
-                    #nn.Conv2d(1,1,8,padding="same"),
-                    #nn.ReLU(),
-                    #nn.MaxPool2d(4),
-                    #nn.Conv2d(1,1,4),
-                    #nn.ReLU(),
-                    #nn.MaxPool2d(2),
+                    nn.Conv2d(n_input_channels,4,8,padding="same"),
+                    nn.ReLU(),
+                    nn.MaxPool2d(4),
+                    nn.Conv2d(4,4,8,padding="same"),
+                    nn.ReLU(),
+                    nn.MaxPool2d(4),
+                    nn.Conv2d(4,4,4,padding="same"),
+                    nn.ReLU(),
+                    nn.MaxPool2d(2),
                     nn.Flatten(),
                     #nn.Linear(16,64),
                     #nn.ReLU(),
@@ -44,7 +44,7 @@ class Network(BaseFeaturesExtractor):
                     #nn.Tanh()
                     )
 
-                total_concat_size += 25#subspace.shape[1] // 32 * subspace.shape[2] // 32
+                total_concat_size += 256#subspace.shape[1] // 32 * subspace.shape[2] // 32
             elif key == "vec":
                 # Run through a simple MLP
                 extractors[key] = nn.Linear(subspace.shape[0], 16)
