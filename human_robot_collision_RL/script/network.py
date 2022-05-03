@@ -28,7 +28,7 @@ class Network(BaseFeaturesExtractor):
                 extractors[key] = nn.Sequential(
                     nn.Conv2d(n_input_channels,4,8,padding="same"),
                     nn.ReLU(),
-                    nn.MaxPool2d(4),
+                    nn.MaxPool2d(8),#4
                     #nn.Conv2d(4,4,8,padding="same"),
                     #nn.ReLU(),
                     #nn.MaxPool2d(4),
