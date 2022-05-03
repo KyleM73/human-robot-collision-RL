@@ -231,7 +231,7 @@ class safetyEnv(Env):
         vY = self.obsVel[1] + ay*TIME_STEP
 
         if (vX**2 + vY**2)**0.5 <= 1:
-            p.applyExternalForce(self.robot,-1,[M_ROBOT*ax,M_ROBOT*ay,M_ROBOT*az],[0,0,0],p.WORLD_FRAME)
+            p.applyExternalForce(self.robot,-1,[M_ROBOT*ax,M_ROBOT*ay,M_ROBOT*az],[0,0,0],p.LINK_FRAME)
         #p.resetBaseVelocity(self.robot,[vX,vY,vZ],[0,0,0])
 
     def _getTargets(self):
@@ -327,7 +327,8 @@ class safetyEnv(Env):
         #dictRew["Angle"] = self.dictRewardCoeff["Angle"] * sqrErrAng
 
         if self.collisions:
-            dictRew["Collisions"] = -5
+            dictRew["Collisions"] = -sum(self.collisions)
+
 
         
         #only penalize velocity near the target
@@ -463,10 +464,10 @@ class safetyEnv(Env):
 
 if __name__ == "__main__": 
     #env = myEnv(False,reward=rewardDict)
-    env = safetyEnv(True,reward=rewardDict)#,humans=1)
+    env = safetyEnv(False,reward=rewardDict)#,humans=1)
     obs = env.reset()
     #act = np.array([-np.sin(env.randAng),np.cos(env.randAng),0]) #[m/s]
-    act = np.array([0,1,0])
+    act = np.array([1,1,0])
     #env.setRecord(True,PATH_TMP)
     for _ in range(MAX_STEPS*100):
         ob, reward, done, dictLog = env.step(act)
