@@ -25,6 +25,7 @@ venv.bak/
 */*save/*.py
 */tmp/*
 */log/*
+*.npz
 
 # Installer logs
 pip-log.txt
