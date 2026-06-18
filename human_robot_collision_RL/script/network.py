@@ -47,8 +47,8 @@ class Network(BaseFeaturesExtractor):
                 total_concat_size += 256#subspace.shape[1] // 32 * subspace.shape[2] // 32
             elif key == "vec":
                 # Run through a simple MLP
-                extractors[key] = nn.Linear(subspace.shape[0], 16)
-                total_concat_size += 16
+                extractors[key] = nn.Linear(subspace.shape[0],subspace.shape[0])
+                total_concat_size += subspace.shape[0]
 
         self.extractors = nn.ModuleDict(extractors)
 

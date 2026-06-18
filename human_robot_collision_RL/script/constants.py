@@ -14,7 +14,7 @@ FIELD_RANGE = 10 #may expand (to 20?)
 ## Simulation params ##
 
 EXP_NUM = 3 # no human, simple human, full human -------------------- #see slides, exps 1,2,3 = simple_nav,human_nav,human_nav_w_RGBD
-EXP_NAME = "Empty_Hall_With_Vision"
+EXP_NAME = "Empty_Hall"#_With_Vision"
 CPU_NUM = 10 # machine dependent
 TRAIN_STEPS = 1_000_000
 POLICY_KWARGS = dict(features_extractor_class=CustomFeatureNetwork,net_arch=[128,64, dict(vf=[], pi=[])]) #vf and pi are layers not shared and unique to the value function and policy, respectively

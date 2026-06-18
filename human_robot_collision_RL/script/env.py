@@ -42,22 +42,24 @@ class safetyEnv(Env):
 
         obs_shape = 6 + int(self.include_human)*3
 
-        self.observation_space_vector = spaces.Box(low=-1,
+        #self.observation_space_vector
+        self.observation_space = spaces.Box(low=-1,
                                             high=1,
                                             shape=(obs_shape,), 
                                             dtype=np.float32
                                             )
-        self.observation_space_img = spaces.Box(low=0,
-                                                high=1,
-                                                shape=(1,CAM_WIDTH,CAM_HEIGHT),
-                                                dtype=np.uint8)
+        
+        #self.observation_space_img = spaces.Box(low=0,
+        #                                        high=1,
+        #                                        shape=(1,CAM_WIDTH,CAM_HEIGHT),
+        #                                        dtype=np.uint8)
 
-        self.observation_space = spaces.Dict(
-            spaces={
-                "vec": self.observation_space_vector,
-                "img": self.observation_space_img
-                    }
-                )
+        #self.observation_space = spaces.Dict(
+        #    spaces={
+        #        "vec": self.observation_space_vector,
+        #        "img": self.observation_space_img
+        #            }
+        #        )
 
         self.action_space = spaces.Box(low=-1,
                                        high=1,
@@ -185,7 +187,7 @@ class safetyEnv(Env):
             if self.waypt != len(self.goals):
                 self.goal = self.goals[self.waypt]
 
-        reward, done, dictLog = self._evaluate(ob["vec"],action)
+        reward, done, dictLog = self._evaluate(ob,action)#self._evaluate(ob["vec"],action)
 
         if self.record:
             if self.recorder == None:
@@ -269,7 +271,7 @@ class safetyEnv(Env):
             img = self.render()
         self.img = (img[:,:,0]/255.).reshape((1,CAM_HEIGHT,CAM_WIDTH))
 
-        return {"vec" : obs, "img" : self.img}
+        return obs#{"vec" : obs, "img" : self.img}
 
     def _evaluate(self,ob=None,action=None):
 
@@ -284,8 +286,8 @@ class safetyEnv(Env):
 
         if ob is None:
             obDict = self._getObs()
-            ob = obDict["vec"]
-            obimg = obDict["img"]
+            ob = obDict#["vec"]
+            #obimg = obDict["img"]
 
         #bodyPose = FIELD_RANGE*np.array(ob[0:2])
         #bodyOri = 2*PI*np.array(ob[2])

@@ -133,7 +133,7 @@ def evaluateMain(experiment_num=EXP_NUM):
 
 if __name__=="__main__":
     #evaluateMain(EXP_NUM)
-    evaluateLive('/0502_1639',exp_name=EXP_NAME)
+    evaluateLive('/0502_1443',exp_name=EXP_NAME)
 
 
     
